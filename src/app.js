@@ -234,9 +234,7 @@ function updateElm(delta) {
     });
 }
 
-let fbo = null;
-let drawToFBO = null;
-let drawFBO = null;
+let commondraw = null;
 
 async function step(t) {
     if (userConfig.interval > 0) {
@@ -248,17 +246,16 @@ async function step(t) {
         requestAnimationFrame(step);
     }
     regl.poll();
-    const vpWidth = regl._gl.drawingBufferWidth;
-    const vpHeight = regl._gl.drawingBufferHeight;
+    // const vpWidth = regl._gl.drawingBufferWidth;
+    // const vpHeight = regl._gl.drawingBufferHeight;
 
-    fbo.resize(vpWidth, vpHeight);
     // const t1 = performance.now();
     await updateElm(t / 1000);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
 
     // Render view
-    drawToFBO({}, () => {
+    commondraw({}, () => {
         if (gview) {
             for (let i = 0; i < gview.length; i++) {
                 let v = gview[i];
@@ -277,13 +274,6 @@ async function step(t) {
             }
         }
     });
-
-    regl.clear({
-        color: [0, 0, 0, 0],
-        depth: 1
-    });
-
-    drawFBO({ fbo });
 
     // const t3 = performance.now();
     // console.log("Time to render view: " + (t3 - t2) + "ms");
@@ -325,73 +315,12 @@ async function start(v) {
         text: new Text(fontjsonObject)
     }
 
-    // Init fbo
-
-    fbo = regl.framebuffer({
-        color: regl.texture({
-            width: 1,
-            height: 1,
-            wrap: 'clamp',
-        }),
-        depth: true
-    })
-
-    drawToFBO = regl({
-        framebuffer: fbo,
+    commondraw = regl({
         uniforms: {
             view: userConfig.tmat
         }
     })
 
-    drawFBO = regl({
-        frag: `precision mediump float;
-uniform sampler2D texture;
-varying vec2 uv;
-#define R 5
-void main() {
-    float W =  float((1 + 2 * R) * (1 + 2 * R));
-    float wRcp = 1.0 / 1280.;
-    float hRcp = 1.0 / 720.;
-    vec3 avg = vec3(0.0);
-    for (int x = -R; x <= +R; x++) {
-      for (int y = -R; y <= +R; y++) {
-        avg += (1.0 / W) * texture2D(texture, uv + vec2(float(x) * wRcp, float(y) * hRcp)).xyz;
-      }
-    }
-    gl_FragColor = vec4(avg, 1.0);
-    // gl_FragColor = texture2D(texture, uv);
-}
-`,
-        vert: `precision mediump float;
-attribute vec2 position;
-attribute vec2 texc;
-varying vec2 uv;
-void main() {
-    uv = texc;
-    gl_Position = vec4(-position, 0, 1);
-}`,
-        attributes: {
-            texc: [
-                1, 1,
-                1, 0,
-                0, 0,
-                0, 1,],
-            position: [
-                1, 1,
-                1, -1,
-                -1, -1,
-                -1, 1,]
-        },
-        uniforms: {
-            texture: regl.prop('fbo')
-        },
-        elements: [
-            0, 1, 2,
-            0, 2, 3
-        ],
-
-        count: 6
-    })
 
     requestAnimationFrame(step);
 }
