@@ -45,6 +45,24 @@ const rect = () => [
         count: 6
     })]
 
+const quad = () => [
+    (x) => x
+    , regl({
+        frag: readFileSync('src/triangle/frag.glsl', 'utf8'),
+        vert: readFileSync('src/triangle/vert.glsl', 'utf8'),
+        attributes: {
+            position: regl.prop('pos')
+        },
+        uniforms: {
+            color: regl.prop('color')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })]
+
 const triangle = () => [
     (x) => x,
     regl({
@@ -54,8 +72,7 @@ const triangle = () => [
             position: regl.prop('pos')
         },
         uniforms: {
-            color: regl.prop('color'),
-            view: userConfig.tmat
+            color: regl.prop('color')
         },
         count: 3
     })]
@@ -109,8 +126,7 @@ const simpText = () => [
             uv: regl.prop('uv')
         },
         uniforms: {
-            tMap: regl.prop('tMap'),
-            view: userConfig.tmat
+            tMap: regl.prop('tMap')
         },
         elements: regl.prop('elem'),
         depth: { enable: false },
@@ -121,7 +137,8 @@ const programs = {
     rect,
     triangle,
     simpTexture,
-    simpText
+    simpText,
+    quad
 }
 
 function loadTexture(texture_name, opts) {
@@ -217,6 +234,10 @@ function updateElm(delta) {
     });
 }
 
+let fbo = null;
+let drawToFBO = null;
+let drawFBO = null;
+
 async function step(t) {
     if (userConfig.interval > 0) {
         // Call step in interval
@@ -226,30 +247,43 @@ async function step(t) {
     } else {
         requestAnimationFrame(step);
     }
-    // regl.poll();
+    regl.poll();
+    const vpWidth = regl._gl.drawingBufferWidth;
+    const vpHeight = regl._gl.drawingBufferHeight;
+
+    fbo.resize(vpWidth, vpHeight);
     // const t1 = performance.now();
     await updateElm(t / 1000);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
 
     // Render view
-    if (gview) {
-        for (let i = 0; i < gview.length; i++) {
-            let v = gview[i];
-            if (v.cmd == 0) { // Render commands
-                const p = loadedPrograms[v.program];
-                if (p) {
-                    p[1](p[0](v.args));
+    drawToFBO({}, () => {
+        if (gview) {
+            for (let i = 0; i < gview.length; i++) {
+                let v = gview[i];
+                if (v.cmd == 0) { // Render commands
+                    const p = loadedPrograms[v.program];
+                    if (p) {
+                        p[1](p[0](v.args));
+                    } else {
+                        console.error("Program not found: " + v.program);
+                    }
+                } else if (v.cmd == 1) { // REGL commands
+                    regl[v.name](v.args);
                 } else {
-                    console.error("Program not found: " + v.program);
+                    console.error("Unknown command: " + v.cmd);
                 }
-            } else if (v.cmd == 1) { // REGL commands
-                regl[v.name](v.args);
-            } else {
-                console.error("Unknown command: " + v.cmd);
             }
         }
-    }
+    });
+
+    regl.clear({
+        color: [0, 0, 0, 0],
+        depth: 1
+    });
+
+    drawFBO({ fbo });
 
     // const t3 = performance.now();
     // console.log("Time to render view: " + (t3 - t2) + "ms");
@@ -272,10 +306,9 @@ async function start(v) {
     ])
 
     // Init
-    loadBuiltinGLProgram("rect");
-    loadBuiltinGLProgram("triangle");
-    loadBuiltinGLProgram("simpTexture");
-    loadBuiltinGLProgram("simpText");
+    for (prog_name of Object.keys(programs)) {
+        loadBuiltinGLProgram(prog_name);
+    }
 
     // Load arial font
 
@@ -291,6 +324,63 @@ async function start(v) {
         texture: texture,
         text: new Text(fontjsonObject)
     }
+
+    // Init fbo
+
+    fbo = regl.framebuffer({
+        color: regl.texture({
+            width: 1,
+            height: 1,
+            wrap: 'clamp',
+        }),
+        depth: true
+    })
+
+    drawToFBO = regl({
+        framebuffer: fbo,
+        uniforms: {
+            view: userConfig.tmat
+        }
+    })
+
+    drawFBO = regl({
+        frag: `precision mediump float;
+uniform sampler2D texture;
+varying vec2 uv;
+void main() {
+    gl_FragColor = texture2D(texture, uv);
+}
+`,
+        vert: `precision mediump float;
+attribute vec2 position;
+attribute vec2 texc;
+varying vec2 uv;
+void main() {
+    uv = texc;
+    gl_Position = vec4(-position, 0, 1);
+}`,
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,],
+            position: [
+                1, 1,
+                1, -1,
+                -1, -1,
+                -1, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('fbo')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+
+        count: 6
+    })
 
     requestAnimationFrame(step);
 }
@@ -603,11 +693,7 @@ function execCmd(v) {
 }
 
 globalThis.ElmREGL = {}
-// globalThis.ElmREGL.loadTexture = loadTexture
-// globalThis.ElmREGL.createGLProgram = createGLProgram
-// globalThis.ElmREGL.config = config
 globalThis.ElmREGL.loadGLProgram = loadGLProgram
 globalThis.ElmREGL.setView = setView
-// globalThis.ElmREGL.start = start
 globalThis.ElmREGL.init = init
 globalThis.ElmREGL.execCmd = execCmd
