@@ -2,9 +2,9 @@ attribute vec2 uv;
 attribute vec3 position;
 
 varying vec2 vUv;
+uniform mat4 view;
 
 void main() {
     vUv = uv;
-
-    gl_Position = vec4(position.x/16.0*4.0, position.y/9.0*4.0+0.5, position.z, 1.0);
+    gl_Position = vec4((position.x) * 2. / 1920. - 1., (position.y + 1080.) * 2. / 1080. - 1., 0, 1.0);
 }

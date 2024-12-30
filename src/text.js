@@ -5,7 +5,7 @@ function Text({
     text,
     width = Infinity,
     align = 'left',
-    size = 1,
+    size = 12,
     letterSpacing = 0,
     lineHeight = 1.4,
     wordSpacing = 0,
@@ -33,7 +33,7 @@ function Text({
         baseline = font.common.base;
 
         // Use baseline so that actual text height is as close to 'size' value as possible
-        scale = size / baseline;
+        scale = size / fontHeight;
 
         // Strip spaces and newlines to get actual character length for buffers
         let chars = text.replace(/[ \n]/g, '');

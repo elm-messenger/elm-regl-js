@@ -18,12 +18,12 @@ let userConfig = {
     virtWidth: 1920,
     virtHeight: 1080,
     ratio: 16 / 9,
-    tmat: [
-        [2 / 1920, 0, 0, -1],
-        [0, -2 / 1080, 0, 1],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-    ]
+    tmat: new Float32Array([
+        2 / 1280, 0, 0, 0,
+        0, 2 / 720, 0, 0,
+        0, 0, 1, 0,
+        -1, -1, 0, 1
+    ])
 };
 
 const rect = () => [
@@ -55,6 +55,7 @@ const triangle = () => [
         },
         uniforms: {
             color: regl.prop('color'),
+            view: userConfig.tmat
         },
         count: 3
     })]
@@ -95,20 +96,21 @@ const simpText = () => [
         loadedFonts["arial"].text.remake(x)
         x = {}
         x.tMap = loadedFonts["arial"].texture
-        x.positions = loadedFonts["arial"].text.position
-        x.elem = loadedFonts["arial"].text.index
-        x.uv = loadedFonts["arial"].text.uv
+        x.position = loadedFonts["arial"].text.buffers.position
+        x.elem = loadedFonts["arial"].text.buffers.index
+        x.uv = loadedFonts["arial"].text.buffers.uv
         return x;
     },
     regl({
         frag: readFileSync('src/text/frag.glsl', 'utf8'),
         vert: readFileSync('src/text/vert.glsl', 'utf8'),
         attributes: {
-            position: regl.prop('positions'),
+            position: regl.prop('position'),
             uv: regl.prop('uv')
         },
         uniforms: {
             tMap: regl.prop('tMap'),
+            view: userConfig.tmat
         },
         elements: regl.prop('elem'),
         depth: { enable: false },
@@ -256,18 +258,18 @@ async function step(t) {
 
 async function start(v) {
     if ("virtWidth" in v) {
-        userConfig.virtWidth = v[virtWidth];
+        userConfig.virtWidth = v.virtWidth;
     }
     if ("virtHeight" in v) {
-        userConfig.virtHeight = v[virtHeight];
+        userConfig.virtHeight = v.virtHeight;
     }
     userConfig.ratio = userConfig.virtWidth / userConfig.virtHeight;
-    userConfig.tmat = [
-        [2 / userConfig.virtWidth, 0, 0, -1],
-        [0, -2 / userConfig.virtHeight, 0, 1],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-    ]
+    userConfig.tmat = new Float32Array([
+        2 / userConfig.virtWidth, 0, 0, 0,
+        0, 2 / userConfig.virtHeight, 0, 0,
+        0, 0, 1, 0,
+        -1, -1, 0, 1
+    ])
 
     // Init
     loadBuiltinGLProgram("rect");
@@ -278,7 +280,8 @@ async function start(v) {
     // Load arial font
 
     const fontjson = readFileSync("src/arial/Arial.json", "utf-8")
-    const fontimg = require("arial/ArialImage")
+    const fontjsonObject = JSON.parse(fontjson);
+    const fontimg = require("./arial/ArialImage")
     const texture = regl.texture({
         data: fontimg,
         mag: "linear",
@@ -286,9 +289,7 @@ async function start(v) {
     })
     loadedFonts["arial"] = {
         texture: texture,
-        text: new Text({
-            font: fontjson
-        })
+        text: new Text(fontjsonObject)
     }
 
     requestAnimationFrame(step);
@@ -309,7 +310,8 @@ function init(canvas, app, glextensions) {
     let exts = ['OES_standard_derivatives'];
 
     exts = exts.concat(glextensions);
-    regl = require('regl')(canvas, {
+    regl = require('regl')({
+        canvas,
         extensions: exts,
     });
 }
@@ -320,17 +322,7 @@ function config(c) {
     }
 }
 
-function Text({
-    font,
-    text,
-    width = Infinity,
-    align = 'left',
-    size = 1,
-    letterSpacing = 0,
-    lineHeight = 1.4,
-    wordSpacing = 0,
-    wordBreak = false,
-}) {
+function Text(font) {
     const _this = this;
     let glyphs, buffers;
     let fontHeight, baseline, scale;
@@ -340,7 +332,6 @@ function Text({
 
     {
         parseFont();
-        // createGeometry();
     }
 
     function parseFont() {
@@ -353,7 +344,7 @@ function Text({
         baseline = font.common.base;
 
         // Use baseline so that actual text height is as close to 'size' value as possible
-        scale = size / baseline;
+        scale = size / fontHeight;
 
         // Strip spaces and newlines to get actual character length for buffers
         let chars = text.replace(/[ \n]/g, '');
@@ -565,9 +556,9 @@ function Text({
             text,
             width = Infinity,
             align = 'left',
-            size = 1,
+            size = 24,
             letterSpacing = 0,
-            lineHeight = 1.4,
+            lineHeight = 1,
             wordSpacing = 0,
             wordBreak = false
         } = options);
@@ -587,7 +578,7 @@ async function loadFont(v) {
             mag: "linear",
             min: "linear",
         });
-        nfont.text = new Text({ font: fontjson })
+        nfont.text = new Text(fontjson)
         loadFont[v.name] = nfont;
     }
     image.onerror = () => {
@@ -619,4 +610,4 @@ globalThis.ElmREGL.loadGLProgram = loadGLProgram
 globalThis.ElmREGL.setView = setView
 // globalThis.ElmREGL.start = start
 globalThis.ElmREGL.init = init
-globalThis.ElmREGL.execRCmd = execCmd
+globalThis.ElmREGL.execCmd = execCmd
