@@ -142,9 +142,35 @@ const simpText = () => [
     })
 ]
 
-const directCompose = () => [
+const defaultCompositor = () => [
     x => x,
-    regl({})    // TODO
+    regl({
+        frag: readFileSync('src/compositors/frag.glsl', 'utf8'),
+        vert: readFileSync('src/compositors/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,],
+            position: [
+                -1, -1,
+                -1, 1,
+                1, 1,
+                1, -1,]
+        },
+        uniforms: {
+            mode: regl.prop('mode'),
+            t1: regl.prop('t1'),
+            t2: regl.prop('t2')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+
+        count: 6
+    })
 ]
 
 const programs = {
@@ -153,7 +179,7 @@ const programs = {
     simpTexture,
     simpText,
     quad,
-    directCompose
+    defaultCompositor
 }
 
 function loadTexture(texture_name, opts) {
@@ -304,11 +330,12 @@ function simpleCompose(oldp, newp) {
         const npid = getFreePalette();
 
         palettes[npid]({}, () => {
-            const p = loadedPrograms["directCompose"];
+            const p = loadedPrograms["defaultCompositor"];
             if (p) {
                 p[1](p[0]({
                     t1: fbos[r1pid],
-                    t2: fbos[r2pid]
+                    t2: fbos[r2pid],
+                    mode: 0
                 }));
             } else {
                 console.error("Program not found: " + v.prog);
@@ -513,10 +540,10 @@ async function start(v) {
                 0, 0,
                 0, 1,],
             position: [
-                1, 1,
-                1, -1,
                 -1, -1,
-                -1, 1,]
+                -1, 1,
+                1, 1,
+                1, -1,]
         },
         uniforms: {
             texture: regl.prop('fbo')
