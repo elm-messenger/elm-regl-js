@@ -152,17 +152,40 @@ const defaultCompositor = () => [
                 1, 1,
                 1, 0,
                 0, 0,
-                0, 1,],
-            position: [
-                -1, -1,
-                -1, 1,
-                1, 1,
-                1, -1,]
+                0, 1,]
         },
         uniforms: {
             mode: regl.prop('mode'),
             t1: regl.prop('t1'),
             t2: regl.prop('t2')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+
+        count: 6
+    })
+]
+
+
+const blur = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/blur/frag.glsl', 'utf8'),
+        vert: readFileSync('src/blur/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            radius: regl.prop('radius'),
+            texture: regl.prop('texture'),
+            wRcp: 1 / userConfig.virtWidth,
+            hRcp: 1 / userConfig.virtHeight
         },
         elements: [
             0, 1, 2,
@@ -179,7 +202,8 @@ const programs = {
     simpTexture,
     simpText,
     quad,
-    defaultCompositor
+    defaultCompositor,
+    blur
 }
 
 function loadTexture(texture_name, opts) {
@@ -462,11 +486,9 @@ async function step(t) {
         freePalette[i] = true;
     }
 
-    if (gview && gview.length > 0) {
-        const pid = drawGroup({
-            c: gview,
-            e: []
-        });
+    // console.log(gview)
+    if (gview) {
+        const pid = drawGroup(gview);
         if (pid >= 0) {
             drawPalette({ fbo: fbos[pid] });
         }
@@ -526,7 +548,8 @@ async function start(v) {
             framebuffer: fbos[i],
             uniforms: {
                 view: userConfig.tmat
-            }
+            },
+            depth: { enable: false },
         }));
     }
 
@@ -538,12 +561,7 @@ async function start(v) {
                 1, 1,
                 1, 0,
                 0, 0,
-                0, 1,],
-            position: [
-                -1, -1,
-                -1, 1,
-                1, 1,
-                1, -1,]
+                0, 1]
         },
         uniforms: {
             texture: regl.prop('fbo')
