@@ -23,8 +23,17 @@ let userConfig = {
         0, 2 / 720, 0, 0,
         0, 0, 1, 0,
         -1, -1, 0, 1
-    ])
+    ]),
+    fboNum: 5
 };
+
+let fbos = [];
+
+let palettes = [];
+
+let freePalette = [];
+
+let drawPalette = null;
 
 const rect = () => [
     (x) => x
@@ -234,7 +243,125 @@ function updateElm(delta) {
     });
 }
 
-let commondraw = null;
+function getFreePalette() {
+    for (let i = 0; i < userConfig.fboNum; i++) {
+        if (freePalette[i]) {
+            freePalette[i] = false;
+            return i;
+        }
+    }
+    alert("No free palette found!");
+}
+
+function drawSingleCommand(v) {
+    // v is a command
+    if (v.cmd == 0) { // Render commands
+        const p = loadedPrograms[v.program];
+        if (p) {
+            p[1](p[0](v.args));
+        } else {
+            console.error("Program not found: " + v.program);
+        }
+    } else if (v.cmd == 1) {
+        // REGL commands
+        regl[v.name](v.args);
+    } else {
+        alert("Unknown command: " + v.cmd);
+    }
+}
+
+function drawComp(v) {
+    // v is a composition command
+    // Return the id of the palette used
+}
+
+function simpleCompose(oldp, newp) {
+    if (oldp == -1) {
+        return newp;
+    } else {
+        // TODO: Implement direct composition
+    }
+}
+
+function freePID(pid) {
+    if (pid >= 0) {
+        freePalette[pid] = true;
+    }
+}
+
+function applyEffect(e, pid) {
+    // Return the id of the palette used
+    // TODO
+}
+
+function drawGroup(v) {
+    // v is a group command
+    // Return the id of the palette used
+
+    // Special optimization
+
+    const cmds = v.c;
+    const effects = v.e;
+
+    if (cmds.length == 0) {
+        return -1;
+    }
+    if (cmds.length == 1 && cmds[0].cmd == 2) {
+        // Single group command, concat effects
+        cmds[0].e = cmds[0].e.concat(effects);
+        return drawGroup(cmds[0]);
+    }
+
+    let curPalette = -1;
+
+    for (let i = 0; i < cmds.length; i++) {
+        const c = cmds[i];
+        let pid = -1;
+        if (c.cmd == 2) {
+            // Effects
+            pid = drawGroup(c);
+            if (pid < 0) {
+                continue;
+            }
+        } else if (c.cmd == 3) {
+            // Composite
+            pid = drawComp(c);
+            if (pid < 0) {
+                continue;
+            }
+        } else {
+            // Other Single Commands
+            pid = getFreePalette();
+            palettes[pid]({}, () => {
+                while (i < cmds.length) {
+                    const lc = cmds[i];
+                    if (lc.cmd == 2 || lc.cmd == 3) {
+                        i--;
+                        break;
+                    } else {
+                        drawSingleCommand(lc);
+                    }
+                    i++;
+                }
+            });
+
+        }
+        const npid = simpleCompose(curPalette, pid);
+        freePID(curPalette);
+        freePID(pid);
+        curPalette = npid;
+    }
+
+    // Apply effects
+    for (let i = 0; i < effects.length; i++) {
+        const e = effects[i];
+        const npid = applyEffect(e, curPalette);
+        freePID(curPalette);
+        curPalette = npid;
+    }
+
+    return curPalette;
+}
 
 async function step(t) {
     if (userConfig.interval > 0) {
@@ -246,34 +373,57 @@ async function step(t) {
         requestAnimationFrame(step);
     }
     regl.poll();
-    // const vpWidth = regl._gl.drawingBufferWidth;
-    // const vpHeight = regl._gl.drawingBufferHeight;
+    const vpWidth = regl._gl.drawingBufferWidth;
+    const vpHeight = regl._gl.drawingBufferHeight;
+
+    for (let i = 0; i < userConfig.fboNum; i++) {
+        fbos[i].resize(vpWidth, vpHeight);
+    }
 
     // const t1 = performance.now();
     await updateElm(t / 1000);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
 
-    // Render view
-    commondraw({}, () => {
-        if (gview) {
-            for (let i = 0; i < gview.length; i++) {
-                let v = gview[i];
-                if (v.cmd == 0) { // Render commands
-                    const p = loadedPrograms[v.program];
-                    if (p) {
-                        p[1](p[0](v.args));
-                    } else {
-                        console.error("Program not found: " + v.program);
-                    }
-                } else if (v.cmd == 1) { // REGL commands
-                    regl[v.name](v.args);
-                } else {
-                    console.error("Unknown command: " + v.cmd);
-                }
-            }
+    for (let i = 0; i < userConfig.fboNum; i++) {
+        freePalette[i] = true;
+    }
+
+    if (gview && gview.length > 0) {
+        const pid = drawGroup({
+            c: gview,
+            e: []
+        });
+        if (pid >= 0) {
+            drawPalette({ fbo: fbos[pid] });
         }
-    });
+    }
+
+    // Render view
+    // commondraw({}, () => {
+    //     if (gview) {
+    //         for (let i = 0; i < gview.length; i++) {
+    //             let v = gview[i];
+    //             if (v.cmd == 0) { // Render commands
+    //                 const p = loadedPrograms[v.program];
+    //                 if (p) {
+    //                     p[1](p[0](v.args));
+    //                 } else {
+    //                     console.error("Program not found: " + v.program);
+    //                 }
+    //             } else if (v.cmd == 1) {
+    //                 // REGL commands
+    //                 regl[v.name](v.args);
+    //             } else if (v.cmd == 2) {
+    //                 // Effect Group
+    //             } else if (v.cmd == 3) {
+    //                 // Composite
+    //             } else {
+    //                 console.error("Unknown command: " + v.cmd);
+    //             }
+    //         }
+    //     }
+    // });
 
     // const t3 = performance.now();
     // console.log("Time to render view: " + (t3 - t2) + "ms");
@@ -315,12 +465,49 @@ async function start(v) {
         text: new Text(fontjsonObject)
     }
 
-    commondraw = regl({
-        uniforms: {
-            view: userConfig.tmat
-        }
-    })
+    for (let i = 0; i < userConfig.fboNum; i++) {
+        fbos.push(regl.framebuffer({
+            color: regl.texture({
+                width: 1,
+                height: 1,
+                wrap: 'clamp'
+            }),
+            depth: true
+        }));
 
+        palettes.push(regl({
+            framebuffer: fbos[i],
+            uniforms: {
+                view: userConfig.tmat
+            }
+        }));
+    }
+
+    drawPalette = regl({
+        frag: readFileSync('src/palette/frag.glsl', 'utf8'),
+        vert: readFileSync('src/palette/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,],
+            position: [
+                1, 1,
+                1, -1,
+                -1, -1,
+                -1, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('fbo')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+
+        count: 6
+    });
 
     requestAnimationFrame(step);
 }
