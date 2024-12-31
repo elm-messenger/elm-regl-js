@@ -142,12 +142,18 @@ const simpText = () => [
     })
 ]
 
+const directCompose = () => [
+    x => x,
+    regl({})    // TODO
+]
+
 const programs = {
     rect,
     triangle,
     simpTexture,
     simpText,
-    quad
+    quad,
+    directCompose
 }
 
 function loadTexture(texture_name, opts) {
@@ -256,11 +262,11 @@ function getFreePalette() {
 function drawSingleCommand(v) {
     // v is a command
     if (v.cmd == 0) { // Render commands
-        const p = loadedPrograms[v.program];
+        const p = loadedPrograms[v.prog];
         if (p) {
             p[1](p[0](v.args));
         } else {
-            console.error("Program not found: " + v.program);
+            console.error("Program not found: " + v.prog);
         }
     } else if (v.cmd == 1) {
         // REGL commands
@@ -273,13 +279,45 @@ function drawSingleCommand(v) {
 function drawComp(v) {
     // v is a composition command
     // Return the id of the palette used
+    const r1pid = drawGroup({ c: v.r1, e: [] });
+    const r2pid = drawGroup({ c: v.r2, e: [] });
+    const npid = getFreePalette();
+    palettes[npid]({}, () => {
+        const p = loadedPrograms[v.prog];
+        v.args.t1 = fbos[r1pid];
+        v.args.t2 = fbos[r2pid];
+        if (p) {
+            p[1](p[0](v.args));
+        } else {
+            console.error("Program not found: " + v.prog);
+        }
+    });
+    freePID(r1pid);
+    freePID(r2pid);
+    return npid;
 }
 
 function simpleCompose(oldp, newp) {
     if (oldp == -1) {
         return newp;
     } else {
-        // TODO: Implement direct composition
+        const npid = getFreePalette();
+
+        palettes[npid]({}, () => {
+            const p = loadedPrograms["directCompose"];
+            if (p) {
+                p[1](p[0]({
+                    t1: fbos[r1pid],
+                    t2: fbos[r2pid]
+                }));
+            } else {
+                console.error("Program not found: " + v.prog);
+            }
+        });
+        freePID(oldp);
+        freePID(newp);
+
+        return npid;
     }
 }
 
@@ -291,7 +329,16 @@ function freePID(pid) {
 
 function applyEffect(e, pid) {
     // Return the id of the palette used
-    // TODO
+    const npid = getFreePalette();
+    palettes[npid]({}, () => {
+        const p = loadedPrograms[e.prog];
+        e.args.texture = fbos[pid];
+        if (p) {
+            p[1](p[0](e.args));
+        } else {
+            console.error("Program not found: " + e.prog);
+        }
+    });
 }
 
 function drawGroup(v) {
@@ -347,8 +394,6 @@ function drawGroup(v) {
 
         }
         const npid = simpleCompose(curPalette, pid);
-        freePID(curPalette);
-        freePID(pid);
         curPalette = npid;
     }
 
