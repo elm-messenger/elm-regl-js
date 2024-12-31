@@ -339,6 +339,7 @@ function applyEffect(e, pid) {
             console.error("Program not found: " + e.prog);
         }
     });
+    return npid;
 }
 
 function drawGroup(v) {
@@ -443,32 +444,6 @@ async function step(t) {
             drawPalette({ fbo: fbos[pid] });
         }
     }
-
-    // Render view
-    // commondraw({}, () => {
-    //     if (gview) {
-    //         for (let i = 0; i < gview.length; i++) {
-    //             let v = gview[i];
-    //             if (v.cmd == 0) { // Render commands
-    //                 const p = loadedPrograms[v.program];
-    //                 if (p) {
-    //                     p[1](p[0](v.args));
-    //                 } else {
-    //                     console.error("Program not found: " + v.program);
-    //                 }
-    //             } else if (v.cmd == 1) {
-    //                 // REGL commands
-    //                 regl[v.name](v.args);
-    //             } else if (v.cmd == 2) {
-    //                 // Effect Group
-    //             } else if (v.cmd == 3) {
-    //                 // Composite
-    //             } else {
-    //                 console.error("Unknown command: " + v.cmd);
-    //             }
-    //         }
-    //     }
-    // });
 
     // const t3 = performance.now();
     // console.log("Time to render view: " + (t3 - t2) + "ms");
