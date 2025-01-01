@@ -460,6 +460,22 @@ function drawGroup(v) {
     return curPalette;
 }
 
+function drawCmd(v) {
+    if (v.cmd == 0 || v.cmd == 1) {
+        const pid = getFreePalette();
+        palettes[pid]({}, () => {
+            drawSingleCommand(v);
+        });
+        return pid;
+    } else if (v.cmd == 2) {
+        return drawGroup(v);
+    } else if (v.cmd == 3) {
+        return drawComp(v);
+    } else {
+        alert("Unknown command: " + v.cmd);
+    }
+}
+
 async function step(t) {
     if (userConfig.interval > 0) {
         // Call step in interval
@@ -488,7 +504,7 @@ async function step(t) {
 
     // console.log(gview)
     if (gview) {
-        const pid = drawGroup(gview);
+        const pid = drawCmd(gview);
         if (pid >= 0) {
             drawPalette({ fbo: fbos[pid] });
         }
