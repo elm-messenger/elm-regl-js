@@ -330,8 +330,8 @@ function drawSingleCommand(v) {
 function drawComp(v) {
     // v is a composition command
     // Return the id of the palette used
-    const r1pid = drawGroup({ c: v.r1, e: [] }, -1);
-    const r2pid = drawGroup({ c: v.r2, e: [] }, -1);
+    const r1pid = drawCmd(v.r1);
+    const r2pid = drawCmd(v.r2);
     const npid = getFreePalette();
     palettes[npid]({}, () => {
         const p = loadedPrograms[v.prog];
@@ -450,6 +450,10 @@ function drawGroup(v, prev) {
             pid = curPalette >= 0 ? curPalette : getFreePalette();
             // console.log("draw single command:", pid);
             palettes[pid]({}, () => {
+                if (curPalette < 0 && c.cmd != 1) {
+                    // Automatically clear the palette
+                    regl.clear({ color: [0, 0, 0, 0] });
+                }
                 while (i < cmds.length) {
                     const lc = cmds[i];
                     if (lc.cmd == 2 || lc.cmd == 3) {
@@ -484,6 +488,10 @@ function drawCmd(v) {
     if (v.cmd == 0 || v.cmd == 1) {
         const pid = getFreePalette();
         palettes[pid]({}, () => {
+            if (v.cmd != 1){
+                // Automatically clear the palette
+                regl.clear({ color: [0, 0, 0, 0] });
+            }
             drawSingleCommand(v);
         });
         return pid;
