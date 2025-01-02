@@ -1,18 +1,19 @@
 precision mediump float;
 uniform sampler2D texture;
-// uniform float radius;
+uniform float radius;
 uniform float wRcp;
 uniform float hRcp;
 varying vec2 uv;
-#define FRAG 5.
-#define radius 5.
 void main() {
-    float W = (1. + 2. * radius) * (1. + 2. * radius);
-    vec3 avg = vec3(0.0);
-    for(float x = -radius; x <= radius; x += radius / FRAG) {
-        for(float y = -radius; y <= radius; y += radius / FRAG) {
-            avg += (1.0 / W) * texture2D(texture, uv + vec2(x * wRcp, y * hRcp)).xyz;
+    if (radius < 0.1) {
+        gl_FragColor = texture2D(texture, uv);
+        return;
+    }
+    vec4 avg = vec4(0.0);
+    for(int x = -5; x <= 5; x++) {
+        for(int y = -5; y <= 5; y++) {
+            avg += (1.0 / 121.0) * texture2D(texture, uv + vec2(float(x) * radius * wRcp, float(y) * radius * hRcp));
         }
     }
-    gl_FragColor = vec4(avg, 1.0);
+    gl_FragColor = avg;
 }

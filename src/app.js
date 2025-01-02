@@ -350,26 +350,29 @@ function drawComp(v) {
 function simpleCompose(oldp, newp) {
     if (oldp == -1) {
         return newp;
-    } else {
-        const npid = getFreePalette();
-
-        palettes[npid]({}, () => {
-            const p = loadedPrograms["defaultCompositor"];
-            if (p) {
-                p[1](p[0]({
-                    t1: fbos[r1pid],
-                    t2: fbos[r2pid],
-                    mode: 0
-                }));
-            } else {
-                console.error("Program not found: " + v.prog);
-            }
-        });
-        freePID(oldp);
-        freePID(newp);
-
-        return npid;
     }
+    if (oldp == newp) {
+        return oldp;
+    }
+    const npid = getFreePalette();
+
+    palettes[npid]({}, () => {
+        const p = loadedPrograms["defaultCompositor"];
+        if (p) {
+            p[1](p[0]({
+                t1: fbos[oldp],
+                t2: fbos[newp],
+                mode: 0
+            }));
+        } else {
+            console.error("Program not found: " + v.prog);
+        }
+    });
+    freePID(oldp);
+    freePID(newp);
+
+    return npid;
+
 }
 
 function freePID(pid) {
@@ -430,7 +433,8 @@ function drawGroup(v) {
             }
         } else {
             // Other Single Commands
-            pid = getFreePalette();
+            pid = curPalette >= 0 ? curPalette : getFreePalette();
+            console.log("draw single command:", pid);
             palettes[pid]({}, () => {
                 while (i < cmds.length) {
                     const lc = cmds[i];
@@ -445,14 +449,16 @@ function drawGroup(v) {
             });
 
         }
-        const npid = simpleCompose(curPalette, pid);
-        curPalette = npid;
+        // const tmpold = curPalette;
+        curPalette = simpleCompose(curPalette, pid);
+        // console.log("simple compose:", tmpold, pid, " -> ", curPalette);
     }
 
     // Apply effects
     for (let i = 0; i < effects.length; i++) {
         const e = effects[i];
         const npid = applyEffect(e, curPalette);
+        // console.log("apply effect:", curPalette, " -> ", npid);
         freePID(curPalette);
         curPalette = npid;
     }
@@ -468,7 +474,7 @@ function drawCmd(v) {
         });
         return pid;
     } else if (v.cmd == 2) {
-        return drawGroup(v);
+        return drawGroup(v); // TODO: optimization: optional drawto
     } else if (v.cmd == 3) {
         return drawComp(v);
     } else {
@@ -557,7 +563,7 @@ async function start(v) {
                 height: 1,
                 wrap: 'clamp'
             }),
-            depth: true
+            depth: false
         }));
 
         palettes.push(regl({
