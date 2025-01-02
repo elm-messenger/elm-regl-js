@@ -303,6 +303,7 @@ function getFreePalette() {
     for (let i = 0; i < userConfig.fboNum; i++) {
         if (freePalette[i]) {
             freePalette[i] = false;
+            // console.log("Free palette found: " + i);
             return i;
         }
     }
@@ -329,8 +330,8 @@ function drawSingleCommand(v) {
 function drawComp(v) {
     // v is a composition command
     // Return the id of the palette used
-    const r1pid = drawGroup({ c: v.r1, e: [] });
-    const r2pid = drawGroup({ c: v.r2, e: [] });
+    const r1pid = drawGroup({ c: v.r1, e: [] }, -1);
+    const r2pid = drawGroup({ c: v.r2, e: [] }, -1);
     const npid = getFreePalette();
     palettes[npid]({}, () => {
         const p = loadedPrograms[v.prog];
@@ -396,7 +397,7 @@ function applyEffect(e, pid) {
     return npid;
 }
 
-function drawGroup(v) {
+function drawGroup(v, prev) {
     // v is a group command
     // Return the id of the palette used
 
@@ -411,17 +412,25 @@ function drawGroup(v) {
     if (cmds.length == 1 && cmds[0].cmd == 2) {
         // Single group command, concat effects
         cmds[0].e = cmds[0].e.concat(effects);
-        return drawGroup(cmds[0]);
+        if (effects.length == 0) {
+            return drawGroup(cmds[0], prev);
+        } else {
+            return drawGroup(cmds[0], -1);
+        }
     }
 
-    let curPalette = -1;
+    let curPalette = prev;
 
     for (let i = 0; i < cmds.length; i++) {
         const c = cmds[i];
         let pid = -1;
         if (c.cmd == 2) {
-            // Effects
-            pid = drawGroup(c);
+            // Group
+            if (c.e.length == 0) {
+                pid = drawGroup(c, curPalette);
+            } else {
+                pid = drawGroup(c, -1);
+            }
             if (pid < 0) {
                 continue;
             }
@@ -439,7 +448,7 @@ function drawGroup(v) {
         } else {
             // Other Single Commands
             pid = curPalette >= 0 ? curPalette : getFreePalette();
-            console.log("draw single command:", pid);
+            // console.log("draw single command:", pid);
             palettes[pid]({}, () => {
                 while (i < cmds.length) {
                     const lc = cmds[i];
@@ -479,7 +488,7 @@ function drawCmd(v) {
         });
         return pid;
     } else if (v.cmd == 2) {
-        return drawGroup(v); // TODO: optimization: optional drawto
+        return drawGroup(v, -1); // TODO: optimization: optional drawto
     } else if (v.cmd == 3) {
         return drawComp(v);
     } else {
