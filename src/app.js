@@ -431,6 +431,11 @@ function drawGroup(v) {
             if (pid < 0) {
                 continue;
             }
+        } else if (c.cmd == 4) {
+            // SaveAsTexture
+            if (curPalette >= 0){
+                loadedTextures[c.name] = fbos[curPalette];
+            }
         } else {
             // Other Single Commands
             pid = curPalette >= 0 ? curPalette : getFreePalette();
