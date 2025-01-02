@@ -433,7 +433,7 @@ function drawGroup(v) {
             }
         } else if (c.cmd == 4) {
             // SaveAsTexture
-            if (curPalette >= 0){
+            if (curPalette >= 0) {
                 loadedTextures[c.name] = fbos[curPalette];
             }
         } else {
@@ -597,6 +597,7 @@ async function start(v) {
             0, 1, 2,
             0, 2, 3
         ],
+        depth: { enable: false },
 
         count: 6
     });
