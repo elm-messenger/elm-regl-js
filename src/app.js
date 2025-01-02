@@ -191,7 +191,32 @@ const blur = () => [
             0, 1, 2,
             0, 2, 3
         ],
+        count: 6
+    })
+]
 
+const gblur = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/gblur/frag.glsl', 'utf8'),
+        vert: readFileSync('src/gblur/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            sigma: regl.prop('sigma'),
+            texture: regl.prop('texture'),
+            wRcp: 1 / userConfig.virtWidth,
+            hRcp: 1 / userConfig.virtHeight
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
         count: 6
     })
 ]
@@ -203,7 +228,8 @@ const programs = {
     simpText,
     quad,
     defaultCompositor,
-    blur
+    blur,
+    gblur
 }
 
 function loadTexture(texture_name, opts) {
@@ -488,7 +514,7 @@ function drawCmd(v) {
     if (v.cmd == 0 || v.cmd == 1) {
         const pid = getFreePalette();
         palettes[pid]({}, () => {
-            if (v.cmd != 1){
+            if (v.cmd != 1) {
                 // Automatically clear the palette
                 regl.clear({ color: [0, 0, 0, 0] });
             }
