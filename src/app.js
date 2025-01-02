@@ -338,6 +338,9 @@ function getFreePalette() {
 
 function drawSingleCommand(v) {
     // v is a command
+    if (!v.args) {
+        v.args = {};
+    }
     if (v.cmd == 0) { // Render commands
         const p = loadedPrograms[v.prog];
         if (p) {
@@ -359,6 +362,9 @@ function drawComp(v) {
     const r1pid = drawCmd(v.r1);
     const r2pid = drawCmd(v.r2);
     const npid = getFreePalette();
+    if (!v.args) {
+        v.args = {};
+    }
     palettes[npid]({}, () => {
         const p = loadedPrograms[v.prog];
         v.args.t1 = fbos[r1pid];
@@ -411,6 +417,9 @@ function freePID(pid) {
 function applyEffect(e, pid) {
     // Return the id of the palette used
     const npid = getFreePalette();
+    if (!e.args) {
+        e.args = {};
+    }
     palettes[npid]({}, () => {
         const p = loadedPrograms[e.prog];
         e.args.texture = fbos[pid];
