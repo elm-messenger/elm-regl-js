@@ -12,4 +12,8 @@ Aim to provide an WebGL declarative renderer for Elm, just like `elm-canvas`.
 
 ## TODO
 
-Effects + Compositor
+- Recv port
+- Circle program
+- Text
+- Texture
+- Masks

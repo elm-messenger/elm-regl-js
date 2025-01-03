@@ -667,11 +667,15 @@ function loadBuiltinGLProgram(prog_name) {
     loadedPrograms[prog_name] = programs[prog_name]();
 }
 
-function init(canvas, app, glextensions) {
+function init(canvas, app, { glextensions, fbonum }) {
     ElmApp = app;
     let exts = ['OES_standard_derivatives'];
-
-    exts = exts.concat(glextensions);
+    if (glextensions) {
+        exts = exts.concat(glextensions);
+    }
+    if (fbonum) {
+        userConfig.fboNum = fbonum;
+    }
     regl = require('regl')({
         canvas,
         extensions: exts,
