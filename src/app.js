@@ -240,15 +240,17 @@ function loadTexture(texture_name, opts) {
         opts.data = image;
         loadedTextures[texture_name] = regl.texture(opts);
         // Response to Elm
-        app.ports.textureLoaded.send({
-            success: true,
+        const response = {
             texture: texture_name,
             width: image.width,
             height: image.height
+        }
+        ElmApp.ports.recvREGLCmd.send({
+            cmd: "loadTexture",
+            response
         });
     }
     image.onerror = () => {
-        console.error("Error loading texture: " + image.src)
         alert("Error loading texture: " + image.src)
     }
 }
@@ -256,7 +258,7 @@ function loadTexture(texture_name, opts) {
 
 function createGLProgram(prog_name, proto) {
     if (loadedPrograms[prog_name]) {
-        console.error("Program already exists: " + prog_name);
+        alert("Program already exists: " + prog_name);
         return;
     }
     console.log("Creating program: " + prog_name);
@@ -306,6 +308,13 @@ function createGLProgram(prog_name, proto) {
     }
     const program = regl(genP);
     loadedPrograms[prog_name] = [initfunc, program];
+    const response = {
+        name: prog_name
+    }
+    ElmApp.ports.recvREGLCmd.send({
+        cmd: "createGLProgram",
+        response
+    });
 }
 
 
@@ -346,7 +355,7 @@ function drawSingleCommand(v) {
         if (p) {
             p[1](p[0](v.args));
         } else {
-            console.error("Program not found: " + v.prog);
+            alert("Program not found: " + v.prog);
         }
     } else if (v.cmd == 1) {
         // REGL commands
@@ -372,7 +381,7 @@ function drawComp(v) {
         if (p) {
             p[1](p[0](v.args));
         } else {
-            console.error("Program not found: " + v.prog);
+            alert("Program not found: " + v.prog);
         }
     });
     freePID(r1pid);
@@ -398,7 +407,7 @@ function simpleCompose(oldp, newp) {
                 mode: 0
             }));
         } else {
-            console.error("Program not found: " + v.prog);
+            alert("Program not found: " + v.prog);
         }
     });
     freePID(oldp);
@@ -426,7 +435,7 @@ function applyEffect(e, pid) {
         if (p) {
             p[1](p[0](e.args));
         } else {
-            console.error("Program not found: " + e.prog);
+            alert("Program not found: " + e.prog);
         }
     });
     return npid;
@@ -946,6 +955,13 @@ async function loadFont(v) {
         });
         nfont.text = new Text(fontjson)
         loadFont[v.name] = nfont;
+        const response = {
+            font: v.name
+        }
+        ElmApp.ports.recvREGLCmd.send({
+            cmd: "loadFont",
+            response
+        });
     }
     image.onerror = () => {
         alert("Error loading font")
@@ -964,7 +980,7 @@ function execCmd(v) {
     } else if (v.cmd == "start") {
         start(v);
     } else {
-        console.error("No such command!");
+        alert("No such command!");
     }
 }
 

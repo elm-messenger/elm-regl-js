@@ -10,11 +10,11 @@ float normpdf(in float x, in float sigma) {
 }
 
 void main() {
-  if(sigma < .5) {
+  if(sigma < .1) {
     gl_FragColor = texture2D(texture, uv);
     return;
   }
-  const int mSize = 11;
+  const int mSize = 15;
   const int kSize = (mSize - 1) / 2;
   float kernel[mSize];
   vec3 final_colour = vec3(0.0);
