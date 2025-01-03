@@ -61,7 +61,12 @@ const triangle = () => [
     })]
 
 const poly = () => [
-    (x) => x,
+    (x) => {
+        if (!("prim" in x)) {
+            x["prim"] = "triangles";
+        }
+        return x;
+    },
     regl({
         frag: readFileSync('src/triangle/frag.glsl', 'utf8'),
         vert: readFileSync('src/triangle/vert.glsl', 'utf8'),
@@ -72,6 +77,7 @@ const poly = () => [
             color: regl.prop('color')
         },
         elements: regl.prop('elem'),
+        primitive: regl.prop('prim'),
     })]
 
 const simpTexture = () => [
@@ -85,30 +91,21 @@ const simpTexture = () => [
                 1, 0,
                 0, 0,
                 0, 1,],
-            position: [
-                0.02, 0.02,
-                0.02, -0.02,
-                -0.02, -0.02,
-                -0.02, 0.02,]
+            position: regl.prop('pos')
         },
-
         uniforms: {
-            texture: regl.prop('texture'),
-            offset: regl.prop('offset')
+            texture: regl.prop('texture')
         },
-
         elements: [
             0, 1, 2,
             0, 2, 3
         ],
-
         count: 6
     })]
 
 const simpText = () => [
     (x) => {
         loadedFonts["arial"].text.remake(x)
-        x = {}
         x.tMap = loadedFonts["arial"].texture
         x.position = loadedFonts["arial"].text.buffers.position
         x.elem = loadedFonts["arial"].text.buffers.index
@@ -123,7 +120,8 @@ const simpText = () => [
             uv: regl.prop('uv')
         },
         uniforms: {
-            tMap: regl.prop('tMap')
+            tMap: regl.prop('tMap'),
+            offset: regl.prop('offset')
         },
         elements: regl.prop('elem'),
         depth: { enable: false },
