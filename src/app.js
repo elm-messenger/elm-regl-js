@@ -86,6 +86,20 @@ const triangle = () => [
         count: 3
     })]
 
+const poly = () => [
+    (x) => x,
+    regl({
+        frag: readFileSync('src/triangle/frag.glsl', 'utf8'),
+        vert: readFileSync('src/triangle/vert.glsl', 'utf8'),
+        attributes: {
+            position: regl.prop('pos')
+        },
+        uniforms: {
+            color: regl.prop('color')
+        },
+        elements: regl.prop('elem'),
+    })]
+
 const simpTexture = () => [
     (x) => { x["texture"] = loadedTextures[x["texture"]]; return x },
     regl({
@@ -264,8 +278,8 @@ const circle = () => [
             center: regl.prop('center'),
             radius: regl.prop('radius'),
             color: regl.prop('color'),
-            vw : userConfig.virtWidth,
-            vh : userConfig.virtHeight
+            vw: userConfig.virtWidth,
+            vh: userConfig.virtHeight
         },
         elements: [
             0, 1, 2,
@@ -285,7 +299,8 @@ const programs = {
     blur,
     gblur,
     circle,
-    crt
+    crt,
+    poly
 }
 
 function loadTexture(texture_name, opts) {
