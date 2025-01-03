@@ -221,6 +221,32 @@ const gblur = () => [
     })
 ]
 
+const crt = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/crt/frag.glsl', 'utf8'),
+        vert: readFileSync('src/crt/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            scanline_count: regl.prop('count'),
+            wRcp: 1 / userConfig.virtWidth,
+            hRcp: 1 / userConfig.virtHeight,
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const circle = () => [
     x => x,
     regl({
@@ -258,7 +284,8 @@ const programs = {
     defaultCompositor,
     blur,
     gblur,
-    circle
+    circle,
+    crt
 }
 
 function loadTexture(texture_name, opts) {

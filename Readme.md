@@ -12,7 +12,7 @@ Aim to provide an WebGL declarative renderer for Elm, just like `elm-canvas`.
 
 ## TODO
 
-- Circle program
+- Poly, multi-mode
 - Text
 - Texture
 - Masks

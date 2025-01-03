@@ -4,8 +4,6 @@ uniform sampler2D t2;
 uniform int mode;
 varying vec2 uv;
 void main() {
-    // gl_FragColor =  texture2D(t2, uv);
-    // return;
     if(mode == 0) { // dst over src
         vec4 sourceColor = texture2D(t1, uv);
         vec4 destColor = texture2D(t2, uv);
