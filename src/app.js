@@ -221,6 +221,34 @@ const gblur = () => [
     })
 ]
 
+const circle = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/circle/frag.glsl', 'utf8'),
+        vert: readFileSync('src/circle/vert.glsl', 'utf8'),
+        attributes: {
+            position: [
+                -1, -1,  // Bottom-left
+                1, -1,  // Bottom-right
+                -1, 1,  // Top-left
+                1, 1,  // Top-right
+            ]
+        },
+        uniforms: {
+            center: regl.prop('center'),
+            radius: regl.prop('radius'),
+            color: regl.prop('color'),
+            vw : userConfig.virtWidth,
+            vh : userConfig.virtHeight
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+
+        count: 6
+    })
+]
 const programs = {
     rect,
     triangle,
@@ -229,7 +257,8 @@ const programs = {
     quad,
     defaultCompositor,
     blur,
-    gblur
+    gblur,
+    circle
 }
 
 function loadTexture(texture_name, opts) {
