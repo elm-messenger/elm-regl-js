@@ -984,8 +984,9 @@ function execCmd(v) {
     }
 }
 
-globalThis.ElmREGL = {}
-globalThis.ElmREGL.loadGLProgram = loadGLProgram
-globalThis.ElmREGL.setView = setView
-globalThis.ElmREGL.init = init
-globalThis.ElmREGL.execCmd = execCmd
+globalThis.ElmREGL = {
+    loadGLProgram,
+    setView,
+    init,
+    execCmd
+}
