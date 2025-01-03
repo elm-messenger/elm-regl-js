@@ -1,8 +1,7 @@
 precision mediump float;
 uniform sampler2D texture;
 uniform float sigma;
-uniform float wRcp;
-uniform float hRcp;
+uniform vec2 view;
 varying vec2 uv;
 
 float normpdf(in float x, in float sigma) {
@@ -28,7 +27,7 @@ void main() {
   }
   for(int i = -kSize; i <= kSize; ++i) {
     for(int j = -kSize; j <= kSize; ++j) {
-      vec4 c = texture2D(texture, uv + vec2(float(i) * wRcp, float(j) * hRcp));
+      vec4 c = texture2D(texture, uv + vec2(float(i) / view.x, float(j) / view.y));
       final_colour += kernel[kSize + j] * kernel[kSize + i] * c.rgb;
       maxa = max(maxa, c.a);
     }

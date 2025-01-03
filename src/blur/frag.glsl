@@ -1,8 +1,7 @@
 precision mediump float;
 uniform sampler2D texture;
 uniform float radius;
-uniform float wRcp;
-uniform float hRcp;
+uniform vec2 view;
 varying vec2 uv;
 void main() {
     if(radius < 0.1) {
@@ -13,7 +12,7 @@ void main() {
     float maxa = 0.0;
     for(int x = -5; x <= 5; x++) {
         for(int y = -5; y <= 5; y++) {
-            vec4 c = texture2D(texture, uv + vec2(float(x) * radius * wRcp, float(y) * radius * hRcp));
+            vec4 c = texture2D(texture, uv + vec2(float(x) * radius / view.x, float(y) * radius / view.y));
             avg += (1.0 / 121.0) * c.xyz;
             maxa = max(maxa, c.a);
         }

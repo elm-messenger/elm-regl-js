@@ -9,7 +9,7 @@ const loadedFonts = {};
 
 let ElmApp = null;
 
-let gview = [];
+let gview = null;
 
 let resolver = null;
 
@@ -17,13 +17,6 @@ let userConfig = {
     interval: 0,
     virtWidth: 1920,
     virtHeight: 1080,
-    ratio: 16 / 9,
-    tmat: new Float32Array([
-        2 / 1280, 0, 0, 0,
-        0, 2 / 720, 0, 0,
-        0, 0, 1, 0,
-        -1, -1, 0, 1
-    ]),
     fboNum: 5
 };
 
@@ -178,9 +171,7 @@ const blur = () => [
         },
         uniforms: {
             radius: regl.prop('radius'),
-            texture: regl.prop('texture'),
-            wRcp: 1 / userConfig.virtWidth,
-            hRcp: 1 / userConfig.virtHeight
+            texture: regl.prop('texture')
         },
         elements: [
             0, 1, 2,
@@ -204,9 +195,7 @@ const gblur = () => [
         },
         uniforms: {
             sigma: regl.prop('sigma'),
-            texture: regl.prop('texture'),
-            wRcp: 1 / userConfig.virtWidth,
-            hRcp: 1 / userConfig.virtHeight
+            texture: regl.prop('texture')
         },
         elements: [
             0, 1, 2,
@@ -230,9 +219,7 @@ const crt = () => [
         },
         uniforms: {
             texture: regl.prop('texture'),
-            scanline_count: regl.prop('count'),
-            wRcp: 1 / userConfig.virtWidth,
-            hRcp: 1 / userConfig.virtHeight,
+            scanline_count: regl.prop('count')
         },
         elements: [
             0, 1, 2,
@@ -270,6 +257,7 @@ const circle = () => [
         count: 6
     })
 ]
+
 const programs = {
     triangle,
     simpTexture,
@@ -645,13 +633,6 @@ async function start(v) {
     if ("virtHeight" in v) {
         userConfig.virtHeight = v.virtHeight;
     }
-    userConfig.ratio = userConfig.virtWidth / userConfig.virtHeight;
-    userConfig.tmat = new Float32Array([
-        2 / userConfig.virtWidth, 0, 0, 0,
-        0, 2 / userConfig.virtHeight, 0, 0,
-        0, 0, 1, 0,
-        -1, -1, 0, 1
-    ])
 
     // Init
     for (prog_name of Object.keys(programs)) {
@@ -686,7 +667,7 @@ async function start(v) {
         palettes.push(regl({
             framebuffer: fbos[i],
             uniforms: {
-                view: userConfig.tmat
+                view: [userConfig.virtWidth, userConfig.virtHeight]
             },
             depth: { enable: false },
         }));

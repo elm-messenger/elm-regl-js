@@ -2,7 +2,6 @@ attribute vec2 uv;
 attribute vec3 position;
 
 varying vec2 vUv;
-uniform mat4 view;
 
 void main() {
     vUv = uv;
