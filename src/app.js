@@ -35,25 +35,6 @@ let freePalette = [];
 
 let drawPalette = null;
 
-const rect = () => [
-    (x) => x
-    , regl({
-        frag: readFileSync('src/rect/frag.glsl', 'utf8'),
-        vert: readFileSync('src/rect/vert.glsl', 'utf8'),
-        attributes: {
-            position: regl.buffer([
-                [-1, -1], [+1, +1], [-1, +1],
-                [-1, -1], [+1, -1], [+1, +1]
-            ])
-        },
-        uniforms: {
-            off: regl.prop('off'),
-            scale: regl.prop('scale'),
-            color: regl.prop('color')
-        },
-        count: 6
-    })]
-
 const quad = () => [
     (x) => x
     , regl({
@@ -290,7 +271,6 @@ const circle = () => [
     })
 ]
 const programs = {
-    rect,
     triangle,
     simpTexture,
     simpText,
