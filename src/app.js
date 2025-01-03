@@ -639,21 +639,6 @@ async function start(v) {
         loadBuiltinGLProgram(prog_name);
     }
 
-    // Load arial font
-
-    const fontjson = readFileSync("src/arial/Arial.json", "utf-8")
-    const fontjsonObject = JSON.parse(fontjson);
-    const fontimg = require("./arial/ArialImage")
-    const texture = regl.texture({
-        data: fontimg,
-        mag: "linear",
-        min: "linear",
-    })
-    loadedFonts["arial"] = {
-        texture: texture,
-        text: new Text(fontjsonObject)
-    }
-
     for (let i = 0; i < userConfig.fboNum; i++) {
         fbos.push(regl.framebuffer({
             color: regl.texture({
