@@ -87,9 +87,9 @@ const simpTexture = () => [
         vert: readFileSync('src/texture/vert.glsl', 'utf8'),
         attributes: {
             texc: [
-                1, 1,
-                1, 0,
                 0, 0,
+                1, 0,
+                1, 1,
                 0, 1,],
             position: regl.prop('pos')
         },
@@ -678,8 +678,7 @@ async function start(v) {
         fbos.push(regl.framebuffer({
             color: regl.texture({
                 width: 1,
-                height: 1,
-                wrap: 'clamp'
+                height: 1
             }),
             depth: false
         }));
@@ -742,7 +741,7 @@ function init(canvas, app, { glextensions, fbonum }) {
         extensions: exts,
         attributes: {
             antialias: false,
-            depth: false,
+            depth: false
         }
     });
 }
