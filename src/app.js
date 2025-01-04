@@ -320,7 +320,7 @@ function createGLProgram(prog_name, proto) {
         alert("Program already exists: " + prog_name);
         return;
     }
-    console.log("Creating program: " + prog_name);
+    // console.log("Creating program: " + prog_name);
     const uniforms = proto.uniforms ? proto.uniforms : {};
     const attributes = proto.attributes ? proto.attributes : {};
     const uniformTextureKeys = proto.uniformsDynTexture ? Object.keys(proto.uniformsDynTexture) : [];
@@ -348,13 +348,21 @@ function createGLProgram(prog_name, proto) {
             attributes[key] = regl.prop(proto.attributesDyn[key]);
         }
     }
+    if (proto.elementsDyn) {
+        proto.elements = regl.prop(proto.elementsDyn);
+    }
+    if (proto.primitiveDyn) {
+        proto.primitive = regl.prop(proto.primitiveDyn);
+    }
     const genP = {
         frag: proto.frag,
-        vert: proto.vert,
-        count: proto.count
+        vert: proto.vert
     }
     if (proto.attributes) {
         genP.attributes = attributes;
+    }
+    if (proto.count) {
+        genP.count = proto.count;
     }
     if (proto.elements) {
         genP.elements = proto.elements;
