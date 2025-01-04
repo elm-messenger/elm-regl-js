@@ -718,6 +718,10 @@ function init(canvas, app, { glextensions, fbonum }) {
     regl = require('regl')({
         canvas,
         extensions: exts,
+        attributes: {
+            antialias: false,
+            depth: false,
+        }
     });
 }
 
