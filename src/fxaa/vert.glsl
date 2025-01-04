@@ -9,7 +9,7 @@ varying vec2 v_rgbSE;
 varying vec2 v_rgbM;
 
 //a resolution for our optimized shader
-uniform vec2 iResolution;
+uniform vec2 view;
 attribute vec2 position;
 varying vec2 vUv;
 
@@ -36,6 +36,6 @@ void main(void) {
    //compute the texture coords and send them to varyings
     vUv = (position + 1.0) * 0.5;
     // vUv.y = 1.0 - vUv.y;
-    vec2 fragCoord = vUv * iResolution;
-    texcoords(fragCoord, iResolution, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
+    vec2 fragCoord = vUv * view;
+    texcoords(fragCoord, view, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
 }

@@ -227,6 +227,29 @@ const crt = () => [
     })
 ]
 
+const fxaa = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/fxaa/frag.glsl', 'utf8'),
+        vert: readFileSync('src/fxaa/vert.glsl', 'utf8'),
+        attributes: {
+            position: [
+                -1, 1,
+                -1, -1,
+                1, -1,
+                1, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const circle = () => [
     x => x,
     regl({
@@ -243,9 +266,7 @@ const circle = () => [
         uniforms: {
             center: regl.prop('center'),
             radius: regl.prop('radius'),
-            color: regl.prop('color'),
-            vw: userConfig.virtWidth,
-            vh: userConfig.virtHeight
+            color: regl.prop('color')
         },
         elements: [
             0, 1, 2,
@@ -266,7 +287,8 @@ const programs = {
     gblur,
     circle,
     crt,
-    poly
+    poly,
+    fxaa
 }
 
 function loadTexture(texture_name, opts) {

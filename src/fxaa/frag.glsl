@@ -9,9 +9,8 @@ varying vec2 v_rgbSE;
 varying vec2 v_rgbM;
 
 varying vec2 vUv;
-uniform vec2 iResolution;
-uniform sampler2D iChannel0;
-uniform bool enabled;
+uniform vec2 view;
+uniform sampler2D texture;
 
 #define FXAA_REDUCE_MIN   (1.0/ 128.0)
 #define FXAA_REDUCE_MUL   (1.0 / 8.0)
@@ -71,14 +70,8 @@ vec4 fxaa(
 
 void main() {
   //can also use gl_FragCoord.xy
-    mediump vec2 fragCoord = vUv * iResolution;
+    mediump vec2 fragCoord = vUv * view;
 
-    vec4 color;
-    if(enabled) {
-        color = fxaa(iChannel0, fragCoord, iResolution, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
-    } else {
-        color = texture2D(iChannel0, vUv);
-    }
+    gl_FragColor = fxaa(texture, fragCoord, view, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
 
-    gl_FragColor = color;
 }
