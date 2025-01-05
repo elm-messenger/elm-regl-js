@@ -686,6 +686,9 @@ async function start(v) {
     if ("virtHeight" in v) {
         userConfig.virtHeight = v.virtHeight;
     }
+    if ("fboNum" in v) {
+        userConfig.fboNum = v.fboNum;
+    }
 
     // Init
     for (prog_name of Object.keys(programs)) {
@@ -769,24 +772,21 @@ function loadBuiltinGLProgram(prog_name) {
     loadedPrograms[prog_name] = programs[prog_name]();
 }
 
-function init(canvas, app, { glextensions, fbonum }) {
+function init(canvas, app, override_conf) {
     ElmApp = app;
-    let exts = ['OES_standard_derivatives'];
-    if (glextensions) {
-        exts = exts.concat(glextensions);
-    }
-    if (fbonum) {
-        userConfig.fboNum = fbonum;
-    }
-    regl = require('regl')({
+    const defconfig ={
         canvas,
-        extensions: exts,
+        extensions: ['OES_standard_derivatives'],
         attributes: {
             antialias: false,
             depth: false,
             premultipliedAlpha: true
         }
-    });
+    }
+    for (const key in override_conf) {
+        defconfig[key] = override_conf[key];
+    }
+    regl = require('regl')(defconfig);
 }
 
 function config(c) {
