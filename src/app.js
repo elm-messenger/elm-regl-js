@@ -61,7 +61,12 @@ const triangle = () => [
     })]
 
 const poly = () => [
-    (x) => x,
+    (x) => {
+        if (!("prim" in x)) {
+            x["prim"] = "triangles";
+        }
+        return x;
+    },
     regl({
         frag: readFileSync('src/triangle/frag.glsl', 'utf8'),
         vert: readFileSync('src/triangle/vert.glsl', 'utf8'),
@@ -72,6 +77,7 @@ const poly = () => [
             color: regl.prop('color')
         },
         elements: regl.prop('elem'),
+        primitive: regl.prop('prim'),
     })]
 
 const simpTexture = () => [
@@ -81,34 +87,25 @@ const simpTexture = () => [
         vert: readFileSync('src/texture/vert.glsl', 'utf8'),
         attributes: {
             texc: [
-                1, 1,
-                1, 0,
                 0, 0,
+                1, 0,
+                1, 1,
                 0, 1,],
-            position: [
-                0.02, 0.02,
-                0.02, -0.02,
-                -0.02, -0.02,
-                -0.02, 0.02,]
+            position: regl.prop('pos')
         },
-
         uniforms: {
-            texture: regl.prop('texture'),
-            offset: regl.prop('offset')
+            texture: regl.prop('texture')
         },
-
         elements: [
             0, 1, 2,
             0, 2, 3
         ],
-
-        count: 6
+        count: 6,
     })]
 
 const simpText = () => [
     (x) => {
         loadedFonts["arial"].text.remake(x)
-        x = {}
         x.tMap = loadedFonts["arial"].texture
         x.position = loadedFonts["arial"].text.buffers.position
         x.elem = loadedFonts["arial"].text.buffers.index
@@ -123,10 +120,11 @@ const simpText = () => [
             uv: regl.prop('uv')
         },
         uniforms: {
-            tMap: regl.prop('tMap')
+            tMap: regl.prop('tMap'),
+            offset: regl.prop('offset')
         },
         elements: regl.prop('elem'),
-        depth: { enable: false },
+        depth: { enable: false }
     })
 ]
 
@@ -229,6 +227,29 @@ const crt = () => [
     })
 ]
 
+const fxaa = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/fxaa/frag.glsl', 'utf8'),
+        vert: readFileSync('src/fxaa/vert.glsl', 'utf8'),
+        attributes: {
+            position: [
+                -1, 1,
+                -1, -1,
+                1, -1,
+                1, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const circle = () => [
     x => x,
     regl({
@@ -236,18 +257,16 @@ const circle = () => [
         vert: readFileSync('src/circle/vert.glsl', 'utf8'),
         attributes: {
             position: [
-                -1, -1,  // Bottom-left
-                1, -1,  // Bottom-right
-                -1, 1,  // Top-left
-                1, 1,  // Top-right
+                -1, -1,
+                1, -1,
+                1, 1,
+                -1, 1,
             ]
         },
         uniforms: {
             center: regl.prop('center'),
             radius: regl.prop('radius'),
-            color: regl.prop('color'),
-            vw: userConfig.virtWidth,
-            vh: userConfig.virtHeight
+            color: regl.prop('color')
         },
         elements: [
             0, 1, 2,
@@ -268,7 +287,8 @@ const programs = {
     gblur,
     circle,
     crt,
-    poly
+    poly,
+    fxaa
 }
 
 function loadTexture(texture_name, opts) {
@@ -300,7 +320,7 @@ function createGLProgram(prog_name, proto) {
         alert("Program already exists: " + prog_name);
         return;
     }
-    console.log("Creating program: " + prog_name);
+    // console.log("Creating program: " + prog_name);
     const uniforms = proto.uniforms ? proto.uniforms : {};
     const attributes = proto.attributes ? proto.attributes : {};
     const uniformTextureKeys = proto.uniformsDynTexture ? Object.keys(proto.uniformsDynTexture) : [];
@@ -328,13 +348,24 @@ function createGLProgram(prog_name, proto) {
             attributes[key] = regl.prop(proto.attributesDyn[key]);
         }
     }
+    if (proto.elementsDyn) {
+        proto.elements = regl.prop(proto.elementsDyn);
+    }
+    if (proto.primitiveDyn) {
+        proto.primitive = regl.prop(proto.primitiveDyn);
+    }
+    if (proto.countDyn) {
+        proto.count = regl.prop(proto.countDyn);
+    }
     const genP = {
         frag: proto.frag,
-        vert: proto.vert,
-        count: proto.count
+        vert: proto.vert
     }
     if (proto.attributes) {
         genP.attributes = attributes;
+    }
+    if (proto.count) {
+        genP.count = proto.count;
     }
     if (proto.elements) {
         genP.elements = proto.elements;
@@ -414,6 +445,7 @@ function drawComp(v) {
         v.args = {};
     }
     palettes[npid]({}, () => {
+        regl.clear({ color: [0, 0, 0, 0] });
         const p = loadedPrograms[v.prog];
         v.args.t1 = fbos[r1pid];
         v.args.t2 = fbos[r2pid];
@@ -435,24 +467,11 @@ function simpleCompose(oldp, newp) {
     if (oldp == newp) {
         return oldp;
     }
-    const npid = getFreePalette();
-
-    palettes[npid]({}, () => {
-        const p = loadedPrograms["defaultCompositor"];
-        if (p) {
-            p[1](p[0]({
-                t1: fbos[oldp],
-                t2: fbos[newp],
-                mode: 0
-            }));
-        } else {
-            alert("Program not found: " + v.prog);
-        }
+    palettes[oldp]({}, () => {
+        drawPalette({ fbo: fbos[newp] });
     });
-    freePID(oldp);
     freePID(newp);
-
-    return npid;
+    return oldp;
 
 }
 
@@ -469,6 +488,7 @@ function applyEffect(e, pid) {
         e.args = {};
     }
     palettes[npid]({}, () => {
+        regl.clear({ color: [0, 0, 0, 0] });
         const p = loadedPrograms[e.prog];
         e.args.texture = fbos[pid];
         if (p) {
@@ -643,8 +663,7 @@ async function start(v) {
         fbos.push(regl.framebuffer({
             color: regl.texture({
                 width: 1,
-                height: 1,
-                wrap: 'clamp'
+                height: 1
             }),
             depth: false
         }));
@@ -655,6 +674,13 @@ async function start(v) {
                 view: [userConfig.virtWidth, userConfig.virtHeight]
             },
             depth: { enable: false },
+            blend: {
+                enable: true,
+                func: {
+                    src: 'one',
+                    dst: 'one minus src alpha'
+                }
+            },
         }));
     }
 
@@ -705,6 +731,11 @@ function init(canvas, app, { glextensions, fbonum }) {
     regl = require('regl')({
         canvas,
         extensions: exts,
+        attributes: {
+            antialias: false,
+            depth: false,
+            premultipliedAlpha: true
+        }
     });
 }
 

@@ -17,6 +17,9 @@ importers:
       regl:
         specifier: ^2.1.1
         version: 2.1.1
+      resl:
+        specifier: ^1.0.3
+        version: 1.0.3
     devDependencies:
       brfs:
         specifier: ^2.0.2
@@ -763,6 +766,9 @@ packages:
     resolution: {integrity: sha512-MsvtOrfG9ZcrOwAW+Qi+F6HbD0CWXEh9ou77uOb7FM2WPhwT7smM833PzanhJLsgXjN89Ir6V2PczXNnMpwKhw==}
     engines: {node: '>= 6'}
     deprecated: request has been deprecated, see https://github.com/request/request/issues/3142
+
+  resl@1.0.3:
+    resolution: {integrity: sha512-8Z+92d1TJjGIko9+YL/GTg3sZT1n07+rjHJuQgBH4y57vyDRgtnUzubhaI21mOz3zCvz10Hbv3xAAyAVyPrUOQ==}
 
   resolve@1.22.10:
     resolution: {integrity: sha512-NPRy+/ncIMeDlTAsuqwKIiferiawhefFJtkNSW0qZJEqMEb+qBt/77B/jGeeek+F0uOeN05CDa6HXbbIgtVX4w==}
@@ -1901,6 +1907,8 @@ snapshots:
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
       uuid: 3.4.0
+
+  resl@1.0.3: {}
 
   resolve@1.22.10:
     dependencies:

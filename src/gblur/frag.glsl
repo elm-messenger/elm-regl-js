@@ -32,5 +32,8 @@ void main() {
       maxa = max(maxa, c.a);
     }
   }
+  if (maxa < 0.01) {
+      discard;
+  }
   gl_FragColor = vec4(final_colour / (Z * Z), maxa);
 }
