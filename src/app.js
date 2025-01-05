@@ -354,6 +354,9 @@ function createGLProgram(prog_name, proto) {
     if (proto.primitiveDyn) {
         proto.primitive = regl.prop(proto.primitiveDyn);
     }
+    if (proto.countDyn) {
+        proto.count = regl.prop(proto.countDyn);
+    }
     const genP = {
         frag: proto.frag,
         vert: proto.vert
@@ -697,6 +700,13 @@ async function start(v) {
                 view: [userConfig.virtWidth, userConfig.virtHeight]
             },
             depth: { enable: false },
+            blend: {
+                enable: true,
+                func: {
+                    src: 'src alpha',
+                    dst: 'one minus src alpha'
+                }
+            },
         }));
     }
 
