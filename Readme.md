@@ -12,7 +12,6 @@ Aim to provide an WebGL declarative renderer for Elm, just like `elm-canvas`.
 
 ## TODO
 
-- Poly, multi-mode
 - Text
 - Texture
 - Masks
