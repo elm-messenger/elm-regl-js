@@ -100,7 +100,7 @@ const simpTexture = () => [
             0, 1, 2,
             0, 2, 3
         ],
-        count: 6
+        count: 6,
     })]
 
 const simpText = () => [
@@ -124,7 +124,7 @@ const simpText = () => [
             offset: regl.prop('offset')
         },
         elements: regl.prop('elem'),
-        depth: { enable: false },
+        depth: { enable: false }
     })
 ]
 
@@ -257,10 +257,10 @@ const circle = () => [
         vert: readFileSync('src/circle/vert.glsl', 'utf8'),
         attributes: {
             position: [
-                -1, -1,  // Bottom-left
-                1, -1,  // Bottom-right
-                -1, 1,  // Top-left
-                1, 1,  // Top-right
+                -1, -1,
+                1, -1,
+                1, 1,
+                -1, 1,
             ]
         },
         uniforms: {
@@ -445,6 +445,7 @@ function drawComp(v) {
         v.args = {};
     }
     palettes[npid]({}, () => {
+        regl.clear({ color: [0, 0, 0, 0] });
         const p = loadedPrograms[v.prog];
         v.args.t1 = fbos[r1pid];
         v.args.t2 = fbos[r2pid];
@@ -466,24 +467,11 @@ function simpleCompose(oldp, newp) {
     if (oldp == newp) {
         return oldp;
     }
-    const npid = getFreePalette();
-
-    palettes[npid]({}, () => {
-        const p = loadedPrograms["defaultCompositor"];
-        if (p) {
-            p[1](p[0]({
-                t1: fbos[oldp],
-                t2: fbos[newp],
-                mode: 0
-            }));
-        } else {
-            alert("Program not found: " + v.prog);
-        }
+    palettes[oldp]({}, () => {
+        drawPalette({ fbo: fbos[newp] });
     });
-    freePID(oldp);
     freePID(newp);
-
-    return npid;
+    return oldp;
 
 }
 
@@ -500,6 +488,7 @@ function applyEffect(e, pid) {
         e.args = {};
     }
     palettes[npid]({}, () => {
+        regl.clear({ color: [0, 0, 0, 0] });
         const p = loadedPrograms[e.prog];
         e.args.texture = fbos[pid];
         if (p) {
@@ -703,7 +692,7 @@ async function start(v) {
             blend: {
                 enable: true,
                 func: {
-                    src: 'src alpha',
+                    src: 'one',
                     dst: 'one minus src alpha'
                 }
             },
@@ -759,7 +748,8 @@ function init(canvas, app, { glextensions, fbonum }) {
         extensions: exts,
         attributes: {
             antialias: false,
-            depth: false
+            depth: false,
+            premultipliedAlpha: true
         }
     });
 }

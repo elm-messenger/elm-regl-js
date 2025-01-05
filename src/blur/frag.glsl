@@ -17,5 +17,8 @@ void main() {
             maxa = max(maxa, c.a);
         }
     }
+    if (maxa < 0.01) {
+        discard;
+    }
     gl_FragColor = vec4(avg, maxa);
 }

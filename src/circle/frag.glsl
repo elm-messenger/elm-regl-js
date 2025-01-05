@@ -8,8 +8,10 @@ void main() {
     vec2 position = vec2((v_position.x + 1.) / 2. * view.x, (v_position.y + 1.) / 2. * view.y);
 
     float distance = distance(position, center);
-    if(distance > radius) {
+    if(distance > radius + 1.) {
         discard;
     }
-    gl_FragColor = color;
+    float alpha =  1. - smoothstep(radius - 1., radius + 1., distance);
+    gl_FragColor = color * alpha;
+    gl_FragColor.a = alpha;
 }
