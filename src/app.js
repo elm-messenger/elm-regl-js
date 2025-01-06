@@ -179,7 +179,60 @@ const defaultCompositor = () => [
             0, 1, 2,
             0, 2, 3
         ],
+        count: 6
+    })
+]
 
+const compFade = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/compFade/frag.glsl', 'utf8'),
+        vert: readFileSync('src/compFade/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            mode: regl.prop('mode'),
+            t: regl.prop('t'),
+            t1: regl.prop('t1'),
+            t2: regl.prop('t2')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+const imgFade = () => [
+    x => {
+        x["mask"] = loadedTextures[x["mask"]]; return x
+    },
+    regl({
+        frag: readFileSync('src/imgFade/frag.glsl', 'utf8'),
+        vert: readFileSync('src/imgFade/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            mask: regl.prop('mask'),
+            t: regl.prop('t'),
+            t1: regl.prop('t1'),
+            t2: regl.prop('t2')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
         count: 6
     })
 ]
@@ -279,6 +332,30 @@ const fxaa = () => [
     })
 ]
 
+const alphamult = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/alphamult/frag.glsl', 'utf8'),
+        vert: readFileSync('src/alphamult/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            alpha: regl.prop('alpha')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const circle = () => [
     x => x,
     regl({
@@ -319,8 +396,11 @@ const programs = {
     gblur,
     crt,
     fxaa,
+    alphamult,
     // Compositors
     defaultCompositor,
+    compFade,
+    imgFade,
 }
 
 function loadTexture(texture_name, opts) {
@@ -679,7 +759,7 @@ async function step(t) {
 }
 
 async function start(v) {
-    const t0 = performance.now();
+    // const t0 = performance.now();
     if ("virtWidth" in v) {
         userConfig.virtWidth = v.virtWidth;
     }
@@ -746,8 +826,8 @@ async function start(v) {
         count: 6
     });
 
-    const t1 = performance.now();
-    console.log("REGL initialized in " + (t1 - t0) + "ms");
+    // const t1 = performance.now();
+    // console.log("REGL initialized in " + (t1 - t0) + "ms");
     requestAnimationFrame(step);
 }
 
@@ -760,14 +840,14 @@ function loadBuiltinGLProgram(prog_name) {
     // Initialize program
     if (programs[prog_name]) {
         loadedPrograms[prog_name] = programs[prog_name]();
-    }else{
+    } else {
         alert("Program not found: " + prog_name);
     }
 }
 
 function init(canvas, app, override_conf) {
     ElmApp = app;
-    const defconfig ={
+    const defconfig = {
         canvas,
         extensions: ['OES_standard_derivatives'],
         attributes: {
