@@ -279,6 +279,31 @@ const fxaa = () => [
     })
 ]
 
+
+const alphamult = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/alphamult/frag.glsl', 'utf8'),
+        vert: readFileSync('src/alphamult/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            alpha: regl.prop('alpha')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const circle = () => [
     x => x,
     regl({
@@ -319,6 +344,7 @@ const programs = {
     gblur,
     crt,
     fxaa,
+    alphamult,
     // Compositors
     defaultCompositor,
 }
@@ -775,14 +801,14 @@ function loadBuiltinGLProgram(prog_name) {
     // Initialize program
     if (programs[prog_name]) {
         loadedPrograms[prog_name] = programs[prog_name]();
-    }else{
+    } else {
         alert("Program not found: " + prog_name);
     }
 }
 
 function init(canvas, app, override_conf) {
     ElmApp = app;
-    const defconfig ={
+    const defconfig = {
         canvas,
         extensions: ['OES_standard_derivatives'],
         attributes: {
