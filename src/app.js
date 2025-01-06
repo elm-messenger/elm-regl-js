@@ -689,9 +689,13 @@ async function start(v) {
     if ("fboNum" in v) {
         userConfig.fboNum = v.fboNum;
     }
+    let toloadprograms = Object.keys(programs);
+    if ("programs" in v) {
+        toloadprograms = v.programs;
+    }
 
     // Init
-    for (prog_name of Object.keys(programs)) {
+    for (prog_name of toloadprograms) {
         loadBuiltinGLProgram(prog_name);
     }
 
@@ -769,7 +773,11 @@ function loadGLProgram(prog_name, f) {
 
 function loadBuiltinGLProgram(prog_name) {
     // Initialize program
-    loadedPrograms[prog_name] = programs[prog_name]();
+    if (programs[prog_name]) {
+        loadedPrograms[prog_name] = programs[prog_name]();
+    }else{
+        alert("Program not found: " + prog_name);
+    }
 }
 
 function init(canvas, app, override_conf) {
