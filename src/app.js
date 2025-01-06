@@ -179,7 +179,60 @@ const defaultCompositor = () => [
             0, 1, 2,
             0, 2, 3
         ],
+        count: 6
+    })
+]
 
+const compFade = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/compFade/frag.glsl', 'utf8'),
+        vert: readFileSync('src/compFade/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            mode: regl.prop('mode'),
+            t: regl.prop('t'),
+            t1: regl.prop('t1'),
+            t2: regl.prop('t2')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+const imgFade = () => [
+    x => {
+        x["mask"] = loadedTextures[x["mask"]]; return x
+    },
+    regl({
+        frag: readFileSync('src/imgFade/frag.glsl', 'utf8'),
+        vert: readFileSync('src/imgFade/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            mask: regl.prop('mask'),
+            t: regl.prop('t'),
+            t1: regl.prop('t1'),
+            t2: regl.prop('t2')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
         count: 6
     })
 ]
@@ -279,7 +332,6 @@ const fxaa = () => [
     })
 ]
 
-
 const alphamult = () => [
     x => x,
     regl({
@@ -347,6 +399,8 @@ const programs = {
     alphamult,
     // Compositors
     defaultCompositor,
+    compFade,
+    imgFade,
 }
 
 function loadTexture(texture_name, opts) {
