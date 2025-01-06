@@ -759,7 +759,7 @@ async function step(t) {
 }
 
 async function start(v) {
-    const t0 = performance.now();
+    // const t0 = performance.now();
     if ("virtWidth" in v) {
         userConfig.virtWidth = v.virtWidth;
     }
@@ -841,8 +841,8 @@ async function start(v) {
         count: 6
     });
 
-    const t1 = performance.now();
-    console.log("REGL initialized in " + (t1 - t0) + "ms");
+    // const t1 = performance.now();
+    // console.log("REGL initialized in " + (t1 - t0) + "ms");
     requestAnimationFrame(step);
 }
 
