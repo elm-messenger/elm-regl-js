@@ -7,7 +7,7 @@ void main() {
     if(mode == 0) { // dst over src
         vec4 sourceColor = texture2D(t1, uv);
         vec4 destColor = texture2D(t2, uv);
-        gl_FragColor = destColor * destColor.a + sourceColor * (1.0 - destColor.a);
+        gl_FragColor = destColor + sourceColor * (1.0 - destColor.a);
         return;
     }
     if(mode == 1) { // mask by src
