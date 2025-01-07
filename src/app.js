@@ -29,6 +29,15 @@ let freePalette = [];
 
 let drawPalette = null;
 
+let browserSupportNow = (
+    window.performance &&
+    window.performance.now &&
+    window.performance.timing &&
+    window.performance.timing.navigationStart
+);
+
+let navigationStartTime = browserSupportNow?window.performance.timing.navigationStart:0;
+
 const quad = () => [
     (x) => x
     , regl({
@@ -737,7 +746,9 @@ async function step(t) {
     }
 
     // const t1 = performance.now();
-    await updateElm(t / 1000);
+
+    const ts = browserSupportNow?window.performance.timing.navigationStart + window.performance.now():Date.now();
+    await updateElm(ts);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
 
