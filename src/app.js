@@ -36,7 +36,7 @@ let browserSupportNow = (
     window.performance.timing.navigationStart
 );
 
-let navigationStartTime = browserSupportNow?window.performance.timing.navigationStart:0;
+let navigationStartTime = browserSupportNow ? window.performance.timing.navigationStart : 0;
 
 const quad = () => [
     (x) => x
@@ -651,6 +651,9 @@ function drawGroup(v, prev) {
 
     for (let i = 0; i < cmds.length; i++) {
         const c = cmds[i];
+        if (!c) {
+            continue;
+        }
         let pid = -1;
         if (c.cmd == 2) {
             // Group
@@ -684,6 +687,10 @@ function drawGroup(v, prev) {
                 }
                 while (i < cmds.length) {
                     const lc = cmds[i];
+                    if (!lc) {
+                        i++;
+                        continue;
+                    }
                     if (lc.cmd == 2 || lc.cmd == 3) {
                         i--;
                         break;
@@ -749,7 +756,7 @@ async function step() {
 
     // const t1 = performance.now();
 
-    const ts = browserSupportNow?window.performance.timing.navigationStart + window.performance.now():Date.now();
+    const ts = browserSupportNow ? window.performance.timing.navigationStart + window.performance.now() : Date.now();
     await updateElm(ts);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
