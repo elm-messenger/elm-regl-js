@@ -2,6 +2,7 @@
 precision mediump float;
 
 uniform sampler2D tMap;
+uniform vec4 color;
 varying vec2 vUv;
 
 void main() {
@@ -11,6 +12,6 @@ void main() {
     float alpha = clamp(v + 0.5, 0.0, 1.0);
     if(alpha < 0.01)
         discard;
-    gl_FragColor.rgb = vec3(0.0);
-    gl_FragColor.a = alpha;
+    gl_FragColor.rgb = color.rgb * color.a;
+    gl_FragColor.a = alpha * color.a;
 }
