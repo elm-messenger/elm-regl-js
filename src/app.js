@@ -728,12 +728,10 @@ function drawCmd(v) {
     }
 }
 
-async function step(t) {
+async function step() {
     if (userConfig.interval > 0) {
         // Call step in interval
-        setTimeout(() => {
-            requestAnimationFrame(step);
-        }, userConfig.interval);
+        setTimeout(step, userConfig.interval);
     } else {
         requestAnimationFrame(step);
     }
