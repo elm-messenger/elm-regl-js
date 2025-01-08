@@ -8,18 +8,12 @@ importers:
 
   .:
     dependencies:
-      gl-mat4:
-        specifier: ^1.2.0
-        version: 1.2.0
       ndpack-image:
         specifier: ^3.0.0
         version: 3.0.0
       regl:
         specifier: ^2.1.1
         version: 2.1.1
-      resl:
-        specifier: ^1.0.3
-        version: 1.0.3
     devDependencies:
       brfs:
         specifier: ^2.0.2
@@ -413,9 +407,6 @@ packages:
   getpass@0.1.7:
     resolution: {integrity: sha512-0fzj9JxOLfJ+XGLhR8ze3unN0KZCgZwiSSDz168VERjK8Wl8kVSdcu2kspd4s4wtAa1y/qrVRiAA0WclVsu0ng==}
 
-  gl-mat4@1.2.0:
-    resolution: {integrity: sha512-sT5C0pwB1/e9G9AvAoLsoaJtbMGjfd/jfxo8jMCKqYYEnjZuFvqV5rehqar0538EmssjdDeiEWnKyBSTw7quoA==}
-
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
     deprecated: Glob versions prior to v9 are no longer supported
@@ -766,9 +757,6 @@ packages:
     resolution: {integrity: sha512-MsvtOrfG9ZcrOwAW+Qi+F6HbD0CWXEh9ou77uOb7FM2WPhwT7smM833PzanhJLsgXjN89Ir6V2PczXNnMpwKhw==}
     engines: {node: '>= 6'}
     deprecated: request has been deprecated, see https://github.com/request/request/issues/3142
-
-  resl@1.0.3:
-    resolution: {integrity: sha512-8Z+92d1TJjGIko9+YL/GTg3sZT1n07+rjHJuQgBH4y57vyDRgtnUzubhaI21mOz3zCvz10Hbv3xAAyAVyPrUOQ==}
 
   resolve@1.22.10:
     resolution: {integrity: sha512-NPRy+/ncIMeDlTAsuqwKIiferiawhefFJtkNSW0qZJEqMEb+qBt/77B/jGeeek+F0uOeN05CDa6HXbbIgtVX4w==}
@@ -1507,8 +1495,6 @@ snapshots:
     dependencies:
       assert-plus: 1.0.0
 
-  gl-mat4@1.2.0: {}
-
   glob@7.2.3:
     dependencies:
       fs.realpath: 1.0.0
@@ -1907,8 +1893,6 @@ snapshots:
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
       uuid: 3.4.0
-
-  resl@1.0.3: {}
 
   resolve@1.22.10:
     dependencies:
