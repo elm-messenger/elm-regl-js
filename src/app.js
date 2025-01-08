@@ -144,6 +144,9 @@ const textbox = () => [
         if (!loadedFonts[font]) {
             alert("Font not found: " + font);
         }
+        if (x["width"] && x["width"] <= 0) {
+            x["width"] = Infinity;
+        }
         loadedFonts[font].text.remake(x)
         x.tMap = loadedFonts[font].texture
         x.position = loadedFonts[font].text.buffers.position
@@ -160,7 +163,8 @@ const textbox = () => [
         },
         uniforms: {
             tMap: regl.prop('tMap'),
-            offset: regl.prop('offset')
+            offset: regl.prop('offset'),
+            color: regl.prop('color')
         },
         elements: regl.prop('elem'),
         depth: { enable: false }
