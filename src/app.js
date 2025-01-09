@@ -164,6 +164,7 @@ const textbox = () => [
         x.position = loadedFonts[font].text.buffers.position
         x.elem = loadedFonts[font].text.buffers.index
         x.uv = loadedFonts[font].text.buffers.uv
+        x.thickness = x.thickness ? x.thickness : 0.5;
         return x;
     },
     regl({
@@ -176,7 +177,8 @@ const textbox = () => [
         uniforms: {
             tMap: regl.prop('tMap'),
             offset: regl.prop('offset'),
-            color: regl.prop('color')
+            color: regl.prop('color'),
+            thickness: regl.prop('thickness'),
         },
         elements: regl.prop('elem'),
         depth: { enable: false }
@@ -236,7 +238,12 @@ const compFade = () => [
 
 const imgFade = () => [
     x => {
-        x["mask"] = loadedTextures[x["mask"]]; return x
+        const src = x["mask"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["mask"] = loadedTextures[src];
+        return x;
     },
     regl({
         frag: readFileSync('src/imgFade/frag.glsl', 'utf8'),
@@ -252,7 +259,8 @@ const imgFade = () => [
             mask: regl.prop('mask'),
             t: regl.prop('t'),
             t1: regl.prop('t1'),
-            t2: regl.prop('t2')
+            t2: regl.prop('t2'),
+            invert_mask : regl.prop('invert_mask')
         },
         elements: [
             0, 1, 2,
