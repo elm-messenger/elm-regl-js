@@ -916,7 +916,7 @@ async function loadFont(v) {
             min: "linear",
         });
         nfont.text = new Text(fontjson)
-        loadFont[v.name] = nfont;
+        loadedFonts[v.name] = nfont;
         const response = {
             font: v.name
         }
