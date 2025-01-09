@@ -91,7 +91,13 @@ const poly = () => [
     })]
 
 const texture = () => [
-    (x) => { x["texture"] = loadedTextures[x["texture"]]; return x },
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["texture"] = loadedTextures[src]; return x
+    },
     regl({
         frag: readFileSync('src/texture/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture/vert.glsl', 'utf8'),
@@ -114,7 +120,13 @@ const texture = () => [
     })]
 
 const centeredTexture = () => [
-    (x) => { x["texture"] = loadedTextures[x["texture"]]; return x },
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["texture"] = loadedTextures[src]; return x
+    },
     regl({
         frag: readFileSync('src/texture-centered/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture-centered/vert.glsl', 'utf8'),
@@ -142,7 +154,7 @@ const textbox = () => [
     (x) => {
         const font = x.font;
         if (!loadedFonts[font]) {
-            alert("Font not found: " + font);
+            return null;
         }
         if (x["width"] && x["width"] <= 0) {
             x["width"] = Infinity;
@@ -453,6 +465,9 @@ function createGLProgram(prog_name, proto) {
         for (let i = 0; i < uniformTextureKeys.length; i++) {
             const key = uniformTextureKeys[i];
             if (key in x) {
+                if (!(x[key] in loadedTextures)) {
+                    return null;
+                }
                 x[key] = loadedTextures[x[key]];
             }
         }
@@ -547,16 +562,21 @@ function drawSingleCommand(v) {
     }
     if (v.cmd == 0) { // Render commands
         const p = loadedPrograms[v.prog];
-        if (p) {
-            p[1](p[0](v.args));
-        } else {
-            alert("Program not found: " + v.prog);
-        }
+        execProg(p, v.args);
     } else if (v.cmd == 1) {
         // REGL commands
         regl[v.name](v.args);
     } else {
         alert("Unknown command: " + v.cmd);
+    }
+}
+
+function execProg(p, va) {
+    if (p) {
+        const args = p[0](va);
+        if (args) {
+            p[1](args);
+        }
     }
 }
 
@@ -574,11 +594,7 @@ function drawComp(v) {
         const p = loadedPrograms[v.prog];
         v.args.t1 = fbos[r1pid];
         v.args.t2 = fbos[r2pid];
-        if (p) {
-            p[1](p[0](v.args));
-        } else {
-            alert("Program not found: " + v.prog);
-        }
+        execProg(p, v.args);
     });
     freePID(r1pid);
     freePID(r2pid);
@@ -616,11 +632,7 @@ function applyEffect(e, pid) {
         regl.clear({ color: [0, 0, 0, 0] });
         const p = loadedPrograms[e.prog];
         e.args.texture = fbos[pid];
-        if (p) {
-            p[1](p[0](e.args));
-        } else {
-            alert("Program not found: " + e.prog);
-        }
+        execProg(p, e.args);
     });
     return npid;
 }
