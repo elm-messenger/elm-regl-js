@@ -7,7 +7,7 @@ uniform int invert_mask;
 varying vec2 vuv;
 void main() {
     float t0 = texture2D(mask, vec2(vuv.x, 1. - vuv.y)).x;
-    if (invert_mask) {
+    if (invert_mask == 1) {
         t0 = 1. - t0;
     }
     t0 = t0 * .5 + .5;
