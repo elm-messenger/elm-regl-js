@@ -91,7 +91,13 @@ const poly = () => [
     })]
 
 const texture = () => [
-    (x) => { x["texture"] = loadedTextures[x["texture"]]; return x },
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["texture"] = loadedTextures[src]; return x
+    },
     regl({
         frag: readFileSync('src/texture/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture/vert.glsl', 'utf8'),
@@ -114,7 +120,13 @@ const texture = () => [
     })]
 
 const centeredTexture = () => [
-    (x) => { x["texture"] = loadedTextures[x["texture"]]; return x },
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["texture"] = loadedTextures[src]; return x
+    },
     regl({
         frag: readFileSync('src/texture-centered/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture-centered/vert.glsl', 'utf8'),
@@ -142,7 +154,7 @@ const textbox = () => [
     (x) => {
         const font = x.font;
         if (!loadedFonts[font]) {
-            alert("Font not found: " + font);
+            return null;
         }
         if (x["width"] && x["width"] <= 0) {
             x["width"] = Infinity;
@@ -152,6 +164,7 @@ const textbox = () => [
         x.position = loadedFonts[font].text.buffers.position
         x.elem = loadedFonts[font].text.buffers.index
         x.uv = loadedFonts[font].text.buffers.uv
+        x.thickness = x.thickness ? x.thickness : 0.5;
         return x;
     },
     regl({
@@ -164,7 +177,8 @@ const textbox = () => [
         uniforms: {
             tMap: regl.prop('tMap'),
             offset: regl.prop('offset'),
-            color: regl.prop('color')
+            color: regl.prop('color'),
+            thickness: regl.prop('thickness'),
         },
         elements: regl.prop('elem'),
         depth: { enable: false }
@@ -224,7 +238,12 @@ const compFade = () => [
 
 const imgFade = () => [
     x => {
-        x["mask"] = loadedTextures[x["mask"]]; return x
+        const src = x["mask"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["mask"] = loadedTextures[src];
+        return x;
     },
     regl({
         frag: readFileSync('src/imgFade/frag.glsl', 'utf8'),
@@ -240,7 +259,8 @@ const imgFade = () => [
             mask: regl.prop('mask'),
             t: regl.prop('t'),
             t1: regl.prop('t1'),
-            t2: regl.prop('t2')
+            t2: regl.prop('t2'),
+            invert_mask : regl.prop('invert_mask')
         },
         elements: [
             0, 1, 2,
@@ -453,6 +473,9 @@ function createGLProgram(prog_name, proto) {
         for (let i = 0; i < uniformTextureKeys.length; i++) {
             const key = uniformTextureKeys[i];
             if (key in x) {
+                if (!(x[key] in loadedTextures)) {
+                    return null;
+                }
                 x[key] = loadedTextures[x[key]];
             }
         }
@@ -547,16 +570,21 @@ function drawSingleCommand(v) {
     }
     if (v.cmd == 0) { // Render commands
         const p = loadedPrograms[v.prog];
-        if (p) {
-            p[1](p[0](v.args));
-        } else {
-            alert("Program not found: " + v.prog);
-        }
+        execProg(p, v.args);
     } else if (v.cmd == 1) {
         // REGL commands
         regl[v.name](v.args);
     } else {
         alert("Unknown command: " + v.cmd);
+    }
+}
+
+function execProg(p, va) {
+    if (p) {
+        const args = p[0](va);
+        if (args) {
+            p[1](args);
+        }
     }
 }
 
@@ -574,11 +602,7 @@ function drawComp(v) {
         const p = loadedPrograms[v.prog];
         v.args.t1 = fbos[r1pid];
         v.args.t2 = fbos[r2pid];
-        if (p) {
-            p[1](p[0](v.args));
-        } else {
-            alert("Program not found: " + v.prog);
-        }
+        execProg(p, v.args);
     });
     freePID(r1pid);
     freePID(r2pid);
@@ -616,11 +640,7 @@ function applyEffect(e, pid) {
         regl.clear({ color: [0, 0, 0, 0] });
         const p = loadedPrograms[e.prog];
         e.args.texture = fbos[pid];
-        if (p) {
-            p[1](p[0](e.args));
-        } else {
-            alert("Program not found: " + e.prog);
-        }
+        execProg(p, e.args);
     });
     return npid;
 }
@@ -901,7 +921,7 @@ async function loadFont(v) {
             min: "linear",
         });
         nfont.text = new Text(fontjson)
-        loadFont[v.name] = nfont;
+        loadedFonts[v.name] = nfont;
         const response = {
             font: v.name
         }
