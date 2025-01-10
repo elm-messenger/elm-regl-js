@@ -95,17 +95,21 @@ const texture = () => [
         if (!loadedTextures[src]) {
             return null;
         }
-        x["texture"] = loadedTextures[src]; return x
+        x["texture"] = loadedTextures[src];
+        if (!x["texc"]) {
+            x["texc"] = [
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 1,];
+        }
+        return x;
     },
     regl({
         frag: readFileSync('src/texture/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture/vert.glsl', 'utf8'),
         attributes: {
-            texc: [
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 1,],
+            texc: regl.prop('texc'),
             position: regl.prop('pos')
         },
         uniforms: {
@@ -124,22 +128,65 @@ const centeredTexture = () => [
         if (!loadedTextures[src]) {
             return null;
         }
-        x["texture"] = loadedTextures[src]; return x
+        x["texture"] = loadedTextures[src];
+        return x;
     },
     regl({
         frag: readFileSync('src/texture-centered/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture-centered/vert.glsl', 'utf8'),
         attributes: {
-            aVertexPosition: [
-                -0.5, -0.5,
-                0.5, -0.5,
-                0.5, 0.5,
-                -0.5, 0.5,],
+            texc: [
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 1]
         },
         uniforms: {
             texture: regl.prop('texture'),
-            position: regl.prop('center'),
-            size: regl.prop('size'),
+            posize: regl.prop('posize'),
+            angle: regl.prop('angle'),
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6,
+    })]
+
+const centeredCroppedTexture = () => [
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["texture"] = loadedTextures[src];
+        const x1 = x["texc"][0];
+        const y1 = x["texc"][1];
+        const w = x["texc"][2];
+        const h = x["texc"][3];
+        x["texc"] = [
+            x1, y1,
+            x1 + w, y1,
+            x1 + w, y1 + h,
+            x1, y1 + h
+        ]
+        return x;
+    },
+    regl({
+        frag: readFileSync('src/texture-cropped-centered/frag.glsl', 'utf8'),
+        vert: readFileSync('src/texture-cropped-centered/vert.glsl', 'utf8'),
+        attributes: {
+            texc: regl.prop('texc'),
+            texc2: [
+                -0.5, -0.5,
+                0.5, -0.5,
+                0.5, 0.5,
+                -0.5, 0.5,
+            ]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            posize: regl.prop('posize'),
             angle: regl.prop('angle'),
         },
         elements: [
@@ -259,7 +306,7 @@ const imgFade = () => [
             t: regl.prop('t'),
             t1: regl.prop('t1'),
             t2: regl.prop('t2'),
-            invert_mask : regl.prop('invert_mask')
+            invert_mask: regl.prop('invert_mask')
         },
         elements: [
             0, 1, 2,
@@ -423,6 +470,7 @@ const programs = {
     poly,
     texture,
     centeredTexture,
+    centeredCroppedTexture,
     // Effects
     blur,
     gblur,
@@ -777,7 +825,7 @@ async function step() {
     // const t1 = performance.now();
 
     const ts = browserSupportNow ? navigationStartTime + window.performance.now() : Date.now();
-    
+
     await updateElm(ts);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
