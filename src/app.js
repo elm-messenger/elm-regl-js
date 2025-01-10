@@ -32,11 +32,10 @@ let drawPalette = null;
 let browserSupportNow = (
     window.performance &&
     window.performance.now &&
-    window.performance.timing &&
-    window.performance.timing.navigationStart
+    window.performance.timeOrigin
 );
 
-let navigationStartTime = browserSupportNow ? window.performance.timing.navigationStart : 0;
+let navigationStartTime = browserSupportNow ? window.performance.timeOrigin : 0;
 
 const quad = () => [
     (x) => x
@@ -442,6 +441,7 @@ function loadTexture(texture_name, opts) {
     image.src = opts.data;
     image.onload = () => {
         opts.data = image;
+        opts.flipY = true;
         loadedTextures[texture_name] = regl.texture(opts);
         // Response to Elm
         const response = {
@@ -776,7 +776,8 @@ async function step() {
 
     // const t1 = performance.now();
 
-    const ts = browserSupportNow ? window.performance.timing.navigationStart + window.performance.now() : Date.now();
+    const ts = browserSupportNow ? navigationStartTime + window.performance.now() : Date.now();
+    
     await updateElm(ts);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
@@ -828,6 +829,7 @@ async function start(v) {
         data: fontimg,
         mag: "linear",
         min: "linear",
+        flipY: true
     })
     loadedFonts["arial"] = {
         texture: texture,
@@ -934,6 +936,7 @@ async function loadFont(v) {
             data: image,
             mag: "linear",
             min: "linear",
+            flipY: true
         });
         nfont.text = new Text(fontjson)
         loadedFonts[v.name] = nfont;

@@ -185,9 +185,9 @@ function Text(font) {
 
                 let u = glyph.x / texW;
                 let uw = glyph.width / texW;
-                let v = glyph.y / texH;
+                let v = 1.0 - glyph.y / texH;
                 let vh = glyph.height / texH;
-                buffers.uv.set([u, v + vh, u, v, u + uw, v + vh, u + uw, v], j * 4 * 2);
+                buffers.uv.set([u, v - vh, u, v, u + uw, v - vh, u + uw, v], j * 4 * 2);
 
                 // Reset cursor to baseline
                 y += glyph.yoffset * scale;
