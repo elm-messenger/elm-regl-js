@@ -96,13 +96,36 @@ const texture = () => [
             return null;
         }
         x["texture"] = loadedTextures[src];
-        if (!x["texc"]) {
-            x["texc"] = [
+        return x;
+    },
+    regl({
+        frag: readFileSync('src/texture/frag.glsl', 'utf8'),
+        vert: readFileSync('src/texture/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
                 0, 0,
                 1, 0,
                 1, 1,
-                0, 1,];
+                0, 1],
+            position: regl.prop('pos')
+        },
+        uniforms: {
+            texture: regl.prop('texture')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6,
+    })]
+
+const textureCropped = () => [
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
         }
+        x["texture"] = loadedTextures[src];
         return x;
     },
     regl({
@@ -169,7 +192,7 @@ const centeredCroppedTexture = () => [
             x1 + w, y1,
             x1 + w, y1 + h,
             x1, y1 + h
-        ]
+        ];
         return x;
     },
     regl({
@@ -469,6 +492,7 @@ const programs = {
     circle,
     poly,
     texture,
+    textureCropped,
     centeredTexture,
     centeredCroppedTexture,
     // Effects
@@ -483,24 +507,36 @@ const programs = {
     imgFade,
 }
 
+function loadTextureREGL(texture_name, opts, w, h) {
+    loadedTextures[texture_name] = regl.texture(opts);
+    // Response to Elm
+    const response = {
+        texture: texture_name,
+        width: w,
+        height: h
+    }
+    ElmApp.ports.recvREGLCmd.send({
+        cmd: "loadTexture",
+        response
+    });
+}
+
 function loadTexture(texture_name, opts) {
     // Initialize textures
     const image = new Image();
     image.src = opts.data;
     image.onload = () => {
-        opts.data = image;
-        opts.flipY = true;
-        loadedTextures[texture_name] = regl.texture(opts);
-        // Response to Elm
-        const response = {
-            texture: texture_name,
-            width: image.width,
-            height: image.height
+        if (opts["subimg"]) {
+            const subimg = opts["subimg"];
+            createImageBitmap(image, subimg[0], subimg[1], subimg[2], subimg[3], { imageOrientation: "flipY", premultiplyAlpha: 'none' }).then((sp) => {
+                opts.data = sp;
+                loadTextureREGL(texture_name, opts, subimg[2], subimg[3]);
+            })
+        } else {
+            opts.data = image;
+            opts.flipY = true;
+            loadTextureREGL(texture_name, opts, image.width, image.height);
         }
-        ElmApp.ports.recvREGLCmd.send({
-            cmd: "loadTexture",
-            response
-        });
     }
     image.onerror = () => {
         alert("Error loading texture: " + image.src)
