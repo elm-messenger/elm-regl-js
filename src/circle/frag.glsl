@@ -5,7 +5,7 @@ uniform vec2 view;
 uniform vec4 color;
 varying vec2 v_position;
 void main() {
-    vec2 position = vec2((v_position.x + 1.) / 2. * view.x, (v_position.y + 1.) / 2. * view.y);
+    vec2 position = vec2((v_position.x + 1.) / 2. * view.x, (1. - v_position.y ) / 2. * view.y);
 
     float distance = distance(position, center);
     if(distance > radius + 1.) {

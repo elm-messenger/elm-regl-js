@@ -103,10 +103,11 @@ const texture = () => [
         vert: readFileSync('src/texture/vert.glsl', 'utf8'),
         attributes: {
             texc: [
-                0, 0,
-                1, 0,
+                0, 1,
                 1, 1,
-                0, 1],
+                1, 0,
+                0, 0,
+            ],
             position: regl.prop('pos')
         },
         uniforms: {
@@ -159,10 +160,11 @@ const centeredTexture = () => [
         vert: readFileSync('src/texture-centered/vert.glsl', 'utf8'),
         attributes: {
             texc: [
-                0, 0,
-                1, 0,
+                0, 1,
                 1, 1,
-                0, 1]
+                1, 0,
+                0, 0,
+            ]
         },
         uniforms: {
             texture: regl.prop('texture'),
@@ -201,10 +203,10 @@ const centeredCroppedTexture = () => [
         attributes: {
             texc: regl.prop('texc'),
             texc2: [
-                -0.5, -0.5,
-                0.5, -0.5,
-                0.5, 0.5,
                 -0.5, 0.5,
+                0.5, 0.5,
+                0.5, -0.5,
+                -0.5, -0.5,
             ]
         },
         uniforms: {

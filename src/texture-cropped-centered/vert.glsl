@@ -19,7 +19,7 @@ void main() {
     vec2 worldPosition = posize.xy + rotatedVertex;
 
     // Transform to OpenGL clip space
-    vec2 clipPosition = vec2((worldPosition.x / view.x) * 2.0 - 1.0, (worldPosition.y / view.y) * 2.0 - 1.0);
+    vec2 clipPosition = vec2((worldPosition.x / view.x) * 2.0 - 1.0, 1. - (worldPosition.y / view.y) * 2.0);
 
     gl_Position = vec4(clipPosition, 0.0, 1.0);
 }
