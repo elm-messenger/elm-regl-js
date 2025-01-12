@@ -14,6 +14,10 @@ function Text(font) {
     function parseFont() {
         glyphs = {};
         font.chars.forEach((d) => (glyphs[d.char] = d));
+        const range = font.distanceField.distanceRange;
+        const w = font.common.scaleW;
+        const h = font.common.scaleH;
+        _this.unitRange = [range / w, range / h];
     }
 
     function createGeometry() {

@@ -236,6 +236,7 @@ const textbox = () => [
         x.elem = loadedFonts[font].text.buffers.index
         x.uv = loadedFonts[font].text.buffers.uv
         x.thickness = x.thickness ? x.thickness : 0.5;
+        x.unitRange = loadedFonts[font].text.unitRange;
         return x;
     },
     regl({
@@ -250,6 +251,7 @@ const textbox = () => [
             offset: regl.prop('offset'),
             color: regl.prop('color'),
             thickness: regl.prop('thickness'),
+            unitRange: regl.prop('unitRange'),
         },
         elements: regl.prop('elem'),
         depth: { enable: false }
@@ -837,7 +839,7 @@ function drawCmd(v) {
         });
         return pid;
     } else if (v.cmd == 2) {
-        return drawGroup(v, -1); // TODO: optimization: optional drawto
+        return drawGroup(v, -1);
     } else if (v.cmd == 3) {
         return drawComp(v);
     } else {
