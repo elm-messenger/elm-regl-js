@@ -155,7 +155,7 @@ function Text(font) {
         const texH = font.common.scaleH;
 
         // For all fonts tested, a little offset was needed to be right on the baseline, hence 0.07.
-        let y = 0.07 * size;
+        let y = -0.07 * size;
         let j = 0;
 
         for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
@@ -176,26 +176,31 @@ function Text(font) {
 
                 // Apply char sprite offsets
                 x += glyph.xoffset * scale;
-                y -= glyph.yoffset * scale;
+                y += glyph.yoffset * scale;
 
                 // each letter is a quad. axis bottom left
                 let w = glyph.width * scale;
                 let h = glyph.height * scale;
-                buffers.position.set([x, y - h, 0, x, y, 0, x + w, y - h, 0, x + w, y, 0], j * 4 * 3);
+                if (it > 0) {
+                    // Italics
+                    buffers.position.set([x, y + h, x + it * scale, y, x + w, y + h, x + w + it * scale, y], j * 4 * 2);
+                } else {
+                    buffers.position.set([x, y + h, x, y, x + w, y + h, x + w, y], j * 4 * 2);
+                }
 
                 let u = glyph.x / texW;
                 let uw = glyph.width / texW;
-                let v = glyph.y / texH;
+                let v = 1.0 - glyph.y / texH;
                 let vh = glyph.height / texH;
-                buffers.uv.set([u, v + vh, u, v, u + uw, v + vh, u + uw, v], j * 4 * 2);
+                buffers.uv.set([u, v - vh, u, v, u + uw, v - vh, u + uw, v], j * 4 * 2);
 
                 // Reset cursor to baseline
-                y += glyph.yoffset * scale;
+                y -= glyph.yoffset * scale;
 
                 j++;
             }
 
-            y -= size * lineHeight;
+            y += size * lineHeight;
         }
 
         _this.buffers = buffers;
@@ -237,7 +242,8 @@ function Text(font) {
             letterSpacing = 0,
             lineHeight = 1,
             wordSpacing = 0,
-            wordBreak = false
+            wordBreak = false,
+            it = 0,
         } = options);
         createGeometry();
     };

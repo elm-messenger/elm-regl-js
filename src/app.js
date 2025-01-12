@@ -32,11 +32,10 @@ let drawPalette = null;
 let browserSupportNow = (
     window.performance &&
     window.performance.now &&
-    window.performance.timing &&
-    window.performance.timing.navigationStart
+    window.performance.timeOrigin
 );
 
-let navigationStartTime = browserSupportNow ? window.performance.timing.navigationStart : 0;
+let navigationStartTime = browserSupportNow ? window.performance.timeOrigin : 0;
 
 const quad = () => [
     (x) => x
@@ -96,17 +95,45 @@ const texture = () => [
         if (!loadedTextures[src]) {
             return null;
         }
-        x["texture"] = loadedTextures[src]; return x
+        x["texture"] = loadedTextures[src];
+        return x;
     },
     regl({
         frag: readFileSync('src/texture/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture/vert.glsl', 'utf8'),
         attributes: {
             texc: [
-                0, 0,
-                1, 0,
+                0, 1,
                 1, 1,
-                0, 1,],
+                1, 0,
+                0, 0,
+            ],
+            position: regl.prop('pos')
+        },
+        uniforms: {
+            texture: regl.prop('texture')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6,
+    })]
+
+const textureCropped = () => [
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["texture"] = loadedTextures[src];
+        return x;
+    },
+    regl({
+        frag: readFileSync('src/texture/frag.glsl', 'utf8'),
+        vert: readFileSync('src/texture/vert.glsl', 'utf8'),
+        attributes: {
+            texc: regl.prop('texc'),
             position: regl.prop('pos')
         },
         uniforms: {
@@ -125,22 +152,66 @@ const centeredTexture = () => [
         if (!loadedTextures[src]) {
             return null;
         }
-        x["texture"] = loadedTextures[src]; return x
+        x["texture"] = loadedTextures[src];
+        return x;
     },
     regl({
         frag: readFileSync('src/texture-centered/frag.glsl', 'utf8'),
         vert: readFileSync('src/texture-centered/vert.glsl', 'utf8'),
         attributes: {
-            aVertexPosition: [
-                -0.5, -0.5,
-                0.5, -0.5,
-                0.5, 0.5,
-                -0.5, 0.5,],
+            texc: [
+                0, 1,
+                1, 1,
+                1, 0,
+                0, 0,
+            ]
         },
         uniforms: {
             texture: regl.prop('texture'),
-            position: regl.prop('center'),
-            size: regl.prop('size'),
+            posize: regl.prop('posize'),
+            angle: regl.prop('angle'),
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6,
+    })]
+
+const centeredCroppedTexture = () => [
+    (x) => {
+        const src = x["texture"];
+        if (!loadedTextures[src]) {
+            return null;
+        }
+        x["texture"] = loadedTextures[src];
+        const x1 = x["texc"][0];
+        const y1 = x["texc"][1];
+        const w = x["texc"][2];
+        const h = x["texc"][3];
+        x["texc"] = [
+            x1, y1,
+            x1 + w, y1,
+            x1 + w, y1 + h,
+            x1, y1 + h
+        ];
+        return x;
+    },
+    regl({
+        frag: readFileSync('src/texture-cropped-centered/frag.glsl', 'utf8'),
+        vert: readFileSync('src/texture-cropped-centered/vert.glsl', 'utf8'),
+        attributes: {
+            texc: regl.prop('texc'),
+            texc2: [
+                -0.5, 0.5,
+                0.5, 0.5,
+                0.5, -0.5,
+                -0.5, -0.5,
+            ]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            posize: regl.prop('posize'),
             angle: regl.prop('angle'),
         },
         elements: [
@@ -260,7 +331,7 @@ const imgFade = () => [
             t: regl.prop('t'),
             t1: regl.prop('t1'),
             t2: regl.prop('t2'),
-            invert_mask : regl.prop('invert_mask')
+            invert_mask: regl.prop('invert_mask')
         },
         elements: [
             0, 1, 2,
@@ -423,7 +494,9 @@ const programs = {
     circle,
     poly,
     texture,
+    textureCropped,
     centeredTexture,
+    centeredCroppedTexture,
     // Effects
     blur,
     gblur,
@@ -436,23 +509,36 @@ const programs = {
     imgFade,
 }
 
+function loadTextureREGL(texture_name, opts, w, h) {
+    loadedTextures[texture_name] = regl.texture(opts);
+    // Response to Elm
+    const response = {
+        texture: texture_name,
+        width: w,
+        height: h
+    }
+    ElmApp.ports.recvREGLCmd.send({
+        cmd: "loadTexture",
+        response
+    });
+}
+
 function loadTexture(texture_name, opts) {
     // Initialize textures
     const image = new Image();
     image.src = opts.data;
     image.onload = () => {
-        opts.data = image;
-        loadedTextures[texture_name] = regl.texture(opts);
-        // Response to Elm
-        const response = {
-            texture: texture_name,
-            width: image.width,
-            height: image.height
+        if (opts["subimg"]) {
+            const subimg = opts["subimg"];
+            createImageBitmap(image, subimg[0], subimg[1], subimg[2], subimg[3], { imageOrientation: "flipY", premultiplyAlpha: 'none' }).then((sp) => {
+                opts.data = sp;
+                loadTextureREGL(texture_name, opts, subimg[2], subimg[3]);
+            })
+        } else {
+            opts.data = image;
+            opts.flipY = true;
+            loadTextureREGL(texture_name, opts, image.width, image.height);
         }
-        ElmApp.ports.recvREGLCmd.send({
-            cmd: "loadTexture",
-            response
-        });
     }
     image.onerror = () => {
         alert("Error loading texture: " + image.src)
@@ -776,7 +862,8 @@ async function step() {
 
     // const t1 = performance.now();
 
-    const ts = browserSupportNow ? window.performance.timing.navigationStart + window.performance.now() : Date.now();
+    const ts = browserSupportNow ? navigationStartTime + window.performance.now() : Date.now();
+
     await updateElm(ts);
     // const t2 = performance.now();
     // console.log("Time to update Elm: " + (t2 - t1) + "ms");
@@ -919,6 +1006,7 @@ async function loadFont(v) {
             data: image,
             mag: "linear",
             min: "linear",
+            flipY: true
         });
         nfont.text = new Text(fontjson)
         loadedFonts[v.name] = nfont;

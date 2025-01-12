@@ -1,17 +1,18 @@
 precision mediump float;
 
 attribute vec2 texc;
+attribute vec2 texc2;
 uniform vec4 posize;
 uniform float angle;
 uniform vec2 view;
 varying vec2 vuv;
 
 void main() {
-    vuv = vec2(texc.x, 1. - texc.y);
+    vuv = texc;
     // Rotate and scale the vertex
     mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
 
-    vec2 scaledVertex = (texc - 0.5) * posize.zw;
+    vec2 scaledVertex = texc2 * posize.zw;
     vec2 rotatedVertex = rotation * scaledVertex;
 
     // Translate to the rectangle's position
