@@ -908,8 +908,7 @@ async function start(v) {
 
     // Load arial font
 
-    const fontjson = readFileSync("src/arial/Arial.json", "utf-8")
-    const fontjsonObject = JSON.parse(fontjson);
+    const fontjsonObject = require("./arial/Arial");
     const fontimg = require("./arial/ArialImage")
     const texture = regl.texture({
         data: fontimg,

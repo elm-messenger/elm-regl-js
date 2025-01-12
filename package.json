@@ -1,6 +1,6 @@
 {
   "name": "elm-regl-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JS port of the elm-regl",
   "keywords": ["elm", "regl", "webgl"],
   "author": "linsyking",
