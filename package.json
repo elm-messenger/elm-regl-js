@@ -1,12 +1,15 @@
 {
   "name": "elm-regl-js",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "description": "JS port of the elm-regl",
-  "keywords": ["elm", "regl", "webgl"],
+  "keywords": [
+    "elm",
+    "regl",
+    "webgl"
+  ],
   "author": "linsyking",
   "license": "MIT",
   "dependencies": {
-    "ndpack-image": "^3.0.0",
     "regl": "^2.1.1"
   },
   "devDependencies": {
