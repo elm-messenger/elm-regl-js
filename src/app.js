@@ -55,6 +55,31 @@ const quad = () => [
         count: 6
     })]
 
+const rect = () => [
+    (x) => x
+    , regl({
+        frag: readFileSync('src/rect/frag.glsl', 'utf8'),
+        vert: readFileSync('src/rect/vert.glsl', 'utf8'),
+        attributes: {
+            position: [
+                0, 1,
+                1, 1,
+                1, 0,
+                0, 0,
+            ]
+        },
+        uniforms: {
+            posize: regl.prop('posize'),
+            angle: regl.prop('angle'),
+            color: regl.prop('color')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })]
+
 const triangle = () => [
     (x) => x,
     regl({
@@ -493,6 +518,7 @@ const programs = {
     triangle,
     textbox,
     quad,
+    rect,
     circle,
     poly,
     texture,
