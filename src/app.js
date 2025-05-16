@@ -18,7 +18,7 @@ let userConfig = {
     interval: 0,
     virtWidth: 1920,
     virtHeight: 1080,
-    fboNum: 5
+    fboNum: 10
 };
 
 let fbos = [];
@@ -117,6 +117,9 @@ const poly = () => [
 const texture = () => [
     (x) => {
         const src = x["texture"];
+        if (!x["alpha"]) {
+            x["alpha"] = 1.0;
+        }
         if (!loadedTextures[src]) {
             return null;
         }
@@ -136,7 +139,8 @@ const texture = () => [
             position: regl.prop('pos')
         },
         uniforms: {
-            texture: regl.prop('texture')
+            texture: regl.prop('texture'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -147,6 +151,9 @@ const texture = () => [
 
 const textureCropped = () => [
     (x) => {
+        if (!x["alpha"]) {
+            x["alpha"] = 1.0;
+        }
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -162,7 +169,8 @@ const textureCropped = () => [
             position: regl.prop('pos')
         },
         uniforms: {
-            texture: regl.prop('texture')
+            texture: regl.prop('texture'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -173,6 +181,9 @@ const textureCropped = () => [
 
 const centeredTexture = () => [
     (x) => {
+        if (!x["alpha"]) {
+            x["alpha"] = 1.0;
+        }
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -195,6 +206,7 @@ const centeredTexture = () => [
             texture: regl.prop('texture'),
             posize: regl.prop('posize'),
             angle: regl.prop('angle'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -205,6 +217,9 @@ const centeredTexture = () => [
 
 const centeredCroppedTexture = () => [
     (x) => {
+        if (!x["alpha"]) {
+            x["alpha"] = 1.0;
+        }
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -238,6 +253,7 @@ const centeredCroppedTexture = () => [
             texture: regl.prop('texture'),
             posize: regl.prop('posize'),
             angle: regl.prop('angle'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -546,7 +562,7 @@ function loadTextureREGL(texture_name, opts, w, h) {
         height: h
     }
     ElmApp.ports.recvREGLCmd.send({
-        cmd: "loadTexture",
+        _c: "loadTexture",
         response
     });
 }
@@ -644,7 +660,7 @@ function createGLProgram(prog_name, proto) {
         name: prog_name
     }
     ElmApp.ports.recvREGLCmd.send({
-        cmd: "createGLProgram",
+        _c: "createGLProgram",
         response
     });
 }
@@ -655,15 +671,37 @@ async function setView(view) {
     resolver();
 }
 
-// function sleep(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// }
-
 function updateElm(delta) {
     return new Promise((resolve, _) => {
         resolver = resolve;
         ElmApp.ports.reglupdate.send(delta);
     });
+}
+
+function allocNewFBO() {
+    const fb = regl.framebuffer({
+        color: regl.texture({
+            width: 1,
+            height: 1
+        }),
+        depth: false
+    });
+    fbos.push(fb);
+
+    palettes.push(regl({
+        framebuffer: fb,
+        uniforms: {
+            view: [userConfig.virtWidth, userConfig.virtHeight]
+        },
+        depth: { enable: false },
+        blend: {
+            enable: true,
+            func: {
+                src: 'one',
+                dst: 'one minus src alpha'
+            }
+        },
+    }));
 }
 
 function getFreePalette() {
@@ -674,22 +712,34 @@ function getFreePalette() {
             return i;
         }
     }
-    alert("No free palette found!");
+    console.warn("No free palette found!");
+    if (userConfig.fboNum > 1000) {
+        alert("Error: Exceeding maximum fbo number!")
+        return -1;
+    }
+    // Acquire a new FBO
+    allocNewFBO();
+    const vpWidth = regl._gl.drawingBufferWidth;
+    const vpHeight = regl._gl.drawingBufferHeight;
+    fbos[userConfig.fboNum].resize(vpWidth, vpHeight);
+    freePalette[userConfig.fboNum] = false;
+    userConfig.fboNum++;
+    return userConfig.fboNum - 1;
 }
 
 function drawSingleCommand(v) {
-    // v is a command
-    if (!v.args) {
-        v.args = {};
+    if (!v) {
+        return;
     }
-    if (v.cmd == 0) { // Render commands
-        const p = loadedPrograms[v.prog];
-        execProg(p, v.args);
-    } else if (v.cmd == 1) {
+    // v is a command
+    if (v._c == 0) { // Render commands
+        const p = loadedPrograms[v._p];
+        execProg(p, v);
+    } else if (v._c == 1) {
         // REGL commands
-        regl[v.name](v.args);
+        regl[v._n](v);
     } else {
-        alert("Unknown command: " + v.cmd);
+        alert("Unknown command: " + v._c);
     }
 }
 
@@ -705,18 +755,18 @@ function execProg(p, va) {
 function drawComp(v) {
     // v is a composition command
     // Return the id of the palette used
+    if (!v) {
+        return -1;
+    }
     const r1pid = drawCmd(v.r1);
     const r2pid = drawCmd(v.r2);
     const npid = getFreePalette();
-    if (!v.args) {
-        v.args = {};
-    }
     palettes[npid]({}, () => {
         regl.clear({ color: [0, 0, 0, 0] });
-        const p = loadedPrograms[v.prog];
-        v.args.t1 = fbos[r1pid];
-        v.args.t2 = fbos[r2pid];
-        execProg(p, v.args);
+        const p = loadedPrograms[v._p];
+        v.t1 = fbos[r1pid];
+        v.t2 = fbos[r2pid];
+        execProg(p, v);
     });
     freePID(r1pid);
     freePID(r2pid);
@@ -747,14 +797,11 @@ function freePID(pid) {
 function applyEffect(e, pid) {
     // Return the id of the palette used
     const npid = getFreePalette();
-    if (!e.args) {
-        e.args = {};
-    }
     palettes[npid]({}, () => {
         regl.clear({ color: [0, 0, 0, 0] });
-        const p = loadedPrograms[e.prog];
-        e.args.texture = fbos[pid];
-        execProg(p, e.args);
+        const p = loadedPrograms[e._p];
+        e.texture = fbos[pid];
+        execProg(p, e);
     });
     return npid;
 }
@@ -763,15 +810,19 @@ function drawGroup(v, prev) {
     // v is a group command
     // Return the id of the palette used
 
+    if (!v) {
+        return prev;
+    }
+
     // Special optimization
 
     const cmds = v.c;
     const effects = v.e;
 
     if (cmds.length == 0) {
-        return -1;
+        return prev;
     }
-    if (cmds.length == 1 && cmds[0].cmd == 2) {
+    if (cmds.length == 1 && cmds[0] && cmds[0]._c == 2) {
         // Single group command, concat effects
         cmds[0].e = cmds[0].e.concat(effects);
         if (effects.length == 0) {
@@ -789,7 +840,7 @@ function drawGroup(v, prev) {
             continue;
         }
         let pid = -1;
-        if (c.cmd == 2) {
+        if (c._c == 2) {
             // Group
             if (c.e.length == 0) {
                 pid = drawGroup(c, curPalette);
@@ -799,23 +850,23 @@ function drawGroup(v, prev) {
             if (pid < 0) {
                 continue;
             }
-        } else if (c.cmd == 3) {
+        } else if (c._c == 3) {
             // Composite
             pid = drawComp(c);
             if (pid < 0) {
                 continue;
             }
-        } else if (c.cmd == 4) {
+        } else if (c._c == 4) {
             // SaveAsTexture
             if (curPalette >= 0) {
-                loadedTextures[c.name] = fbos[curPalette];
+                loadedTextures[c._n] = fbos[curPalette];
             }
         } else {
             // Other Single Commands
             pid = curPalette >= 0 ? curPalette : getFreePalette();
             // console.log("draw single command:", pid);
             palettes[pid]({}, () => {
-                if (curPalette < 0 && c.cmd != 1) {
+                if (curPalette < 0 && c._c != 1) {
                     // Automatically clear the palette
                     regl.clear({ color: [0, 0, 0, 0] });
                 }
@@ -825,7 +876,7 @@ function drawGroup(v, prev) {
                         i++;
                         continue;
                     }
-                    if (lc.cmd == 2 || lc.cmd == 3) {
+                    if (lc._c == 2 || lc._c == 3) {
                         i--;
                         break;
                     } else {
@@ -854,22 +905,25 @@ function drawGroup(v, prev) {
 }
 
 function drawCmd(v) {
-    if (v.cmd == 0 || v.cmd == 1) {
+    if (!v) {
+        return -1;
+    }
+    if (v._c == 0 || v._c == 1) {
         const pid = getFreePalette();
         palettes[pid]({}, () => {
-            if (v.cmd != 1) {
+            if (v._c != 1) {
                 // Automatically clear the palette
                 regl.clear({ color: [0, 0, 0, 0] });
             }
             drawSingleCommand(v);
         });
         return pid;
-    } else if (v.cmd == 2) {
+    } else if (v._c == 2) {
         return drawGroup(v, -1);
-    } else if (v.cmd == 3) {
+    } else if (v._c == 3) {
         return drawComp(v);
     } else {
-        alert("Unknown command: " + v.cmd);
+        alert("Unknown command: " + v._c);
     }
 }
 
@@ -900,12 +954,10 @@ async function step() {
         freePalette[i] = true;
     }
 
-    // console.log(gview)
-    if (gview) {
-        const pid = drawCmd(gview);
-        if (pid >= 0) {
-            drawPalette({ fbo: fbos[pid] });
-        }
+    // console.log(gview);
+    const pid = drawCmd(gview);
+    if (pid >= 0) {
+        drawPalette({ fbo: fbos[pid] });
     }
 
     // const t3 = performance.now();
@@ -935,28 +987,7 @@ async function start(v) {
     }
 
     for (let i = 0; i < userConfig.fboNum; i++) {
-        fbos.push(regl.framebuffer({
-            color: regl.texture({
-                width: 1,
-                height: 1
-            }),
-            depth: false
-        }));
-
-        palettes.push(regl({
-            framebuffer: fbos[i],
-            uniforms: {
-                view: [userConfig.virtWidth, userConfig.virtHeight]
-            },
-            depth: { enable: false },
-            blend: {
-                enable: true,
-                func: {
-                    src: 'one',
-                    dst: 'one minus src alpha'
-                }
-            },
-        }));
+        allocNewFBO();
     }
 
     drawPalette = regl({
@@ -1037,12 +1068,12 @@ async function loadFont(v) {
             flipY: true
         });
         nfont.text = new Text(fontjson)
-        loadedFonts[v.name] = nfont;
+        loadedFonts[v._n] = nfont;
         const response = {
-            font: v.name
+            font: v._n
         }
         ElmApp.ports.recvREGLCmd.send({
-            cmd: "loadFont",
+            _c: "loadFont",
             response
         });
     }
@@ -1052,15 +1083,15 @@ async function loadFont(v) {
 }
 
 function execCmd(v) {
-    if (v.cmd == "loadFont") {
+    if (v._c == "loadFont") {
         loadFont(v);
-    } else if (v.cmd == "loadTexture") {
-        loadTexture(v.name, v.opts);
-    } else if (v.cmd == "createGLProgram") {
-        createGLProgram(v.name, v.proto);
-    } else if (v.cmd == "config") {
+    } else if (v._c == "loadTexture") {
+        loadTexture(v._n, v.opts);
+    } else if (v._c == "createGLProgram") {
+        createGLProgram(v._n, v.proto);
+    } else if (v._c == "config") {
         config(v.config);
-    } else if (v.cmd == "start") {
+    } else if (v._c == "start") {
         start(v);
     } else {
         alert("No such command!");
