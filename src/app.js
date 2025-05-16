@@ -728,7 +728,7 @@ function getFreePalette() {
 }
 
 function drawSingleCommand(v) {
-    if (!v) {
+    if (!v || v._c == undefined) {
         return;
     }
     // v is a command
@@ -739,7 +739,8 @@ function drawSingleCommand(v) {
         // REGL commands
         regl[v._n](v);
     } else {
-        alert("Unknown command: " + v._c);
+        console.log(v);
+        alert("Draw single command unknown command");
     }
 }
 
@@ -923,7 +924,7 @@ function drawCmd(v) {
     } else if (v._c == 3) {
         return drawComp(v);
     } else {
-        alert("Unknown command: " + v._c);
+        alert("drawCmd: Unknown command: " + v);
     }
 }
 
@@ -1101,6 +1102,7 @@ async function loadFont(v) {
 }
 
 function execCmd(v) {
+    // console.log(v);
     if (v._c == "loadFont") {
         loadFont(v);
     } else if (v._c == "loadTexture") {
