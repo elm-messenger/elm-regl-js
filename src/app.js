@@ -562,7 +562,7 @@ function loadTextureREGL(texture_name, opts, w, h) {
         height: h
     }
     ElmApp.ports.recvREGLCmd.send({
-        cmd: "loadTexture",
+        _c: "loadTexture",
         response
     });
 }
@@ -660,7 +660,7 @@ function createGLProgram(prog_name, proto) {
         name: prog_name
     }
     ElmApp.ports.recvREGLCmd.send({
-        cmd: "createGLProgram",
+        _c: "createGLProgram",
         response
     });
 }
@@ -732,17 +732,14 @@ function drawSingleCommand(v) {
         return;
     }
     // v is a command
-    if (!v.args) {
-        v.args = {};
-    }
-    if (v.cmd == 0) { // Render commands
-        const p = loadedPrograms[v.prog];
-        execProg(p, v.args);
-    } else if (v.cmd == 1) {
+    if (v._c == 0) { // Render commands
+        const p = loadedPrograms[v._p];
+        execProg(p, v);
+    } else if (v._c == 1) {
         // REGL commands
-        regl[v.name](v.args);
+        regl[v._n](v);
     } else {
-        alert("Unknown command: " + v.cmd);
+        alert("Unknown command: " + v._c);
     }
 }
 
@@ -764,15 +761,12 @@ function drawComp(v) {
     const r1pid = drawCmd(v.r1);
     const r2pid = drawCmd(v.r2);
     const npid = getFreePalette();
-    if (!v.args) {
-        v.args = {};
-    }
     palettes[npid]({}, () => {
         regl.clear({ color: [0, 0, 0, 0] });
-        const p = loadedPrograms[v.prog];
-        v.args.t1 = fbos[r1pid];
-        v.args.t2 = fbos[r2pid];
-        execProg(p, v.args);
+        const p = loadedPrograms[v._p];
+        v.t1 = fbos[r1pid];
+        v.t2 = fbos[r2pid];
+        execProg(p, v);
     });
     freePID(r1pid);
     freePID(r2pid);
@@ -803,14 +797,11 @@ function freePID(pid) {
 function applyEffect(e, pid) {
     // Return the id of the palette used
     const npid = getFreePalette();
-    if (!e.args) {
-        e.args = {};
-    }
     palettes[npid]({}, () => {
         regl.clear({ color: [0, 0, 0, 0] });
-        const p = loadedPrograms[e.prog];
-        e.args.texture = fbos[pid];
-        execProg(p, e.args);
+        const p = loadedPrograms[e._p];
+        e.texture = fbos[pid];
+        execProg(p, e);
     });
     return npid;
 }
@@ -831,7 +822,7 @@ function drawGroup(v, prev) {
     if (cmds.length == 0) {
         return prev;
     }
-    if (cmds.length == 1 && cmds[0] && cmds[0].cmd == 2) {
+    if (cmds.length == 1 && cmds[0] && cmds[0]._c == 2) {
         // Single group command, concat effects
         cmds[0].e = cmds[0].e.concat(effects);
         if (effects.length == 0) {
@@ -849,7 +840,7 @@ function drawGroup(v, prev) {
             continue;
         }
         let pid = -1;
-        if (c.cmd == 2) {
+        if (c._c == 2) {
             // Group
             if (c.e.length == 0) {
                 pid = drawGroup(c, curPalette);
@@ -859,23 +850,23 @@ function drawGroup(v, prev) {
             if (pid < 0) {
                 continue;
             }
-        } else if (c.cmd == 3) {
+        } else if (c._c == 3) {
             // Composite
             pid = drawComp(c);
             if (pid < 0) {
                 continue;
             }
-        } else if (c.cmd == 4) {
+        } else if (c._c == 4) {
             // SaveAsTexture
             if (curPalette >= 0) {
-                loadedTextures[c.name] = fbos[curPalette];
+                loadedTextures[c._n] = fbos[curPalette];
             }
         } else {
             // Other Single Commands
             pid = curPalette >= 0 ? curPalette : getFreePalette();
             // console.log("draw single command:", pid);
             palettes[pid]({}, () => {
-                if (curPalette < 0 && c.cmd != 1) {
+                if (curPalette < 0 && c._c != 1) {
                     // Automatically clear the palette
                     regl.clear({ color: [0, 0, 0, 0] });
                 }
@@ -885,7 +876,7 @@ function drawGroup(v, prev) {
                         i++;
                         continue;
                     }
-                    if (lc.cmd == 2 || lc.cmd == 3) {
+                    if (lc._c == 2 || lc._c == 3) {
                         i--;
                         break;
                     } else {
@@ -917,22 +908,22 @@ function drawCmd(v) {
     if (!v) {
         return -1;
     }
-    if (v.cmd == 0 || v.cmd == 1) {
+    if (v._c == 0 || v._c == 1) {
         const pid = getFreePalette();
         palettes[pid]({}, () => {
-            if (v.cmd != 1) {
+            if (v._c != 1) {
                 // Automatically clear the palette
                 regl.clear({ color: [0, 0, 0, 0] });
             }
             drawSingleCommand(v);
         });
         return pid;
-    } else if (v.cmd == 2) {
+    } else if (v._c == 2) {
         return drawGroup(v, -1);
-    } else if (v.cmd == 3) {
+    } else if (v._c == 3) {
         return drawComp(v);
     } else {
-        alert("Unknown command: " + v.cmd);
+        alert("Unknown command: " + v._c);
     }
 }
 
@@ -963,6 +954,7 @@ async function step() {
         freePalette[i] = true;
     }
 
+    // console.log(gview);
     const pid = drawCmd(gview);
     if (pid >= 0) {
         drawPalette({ fbo: fbos[pid] });
@@ -1094,12 +1086,12 @@ async function loadFont(v) {
             flipY: true
         });
         nfont.text = new Text(fontjson)
-        loadedFonts[v.name] = nfont;
+        loadedFonts[v._n] = nfont;
         const response = {
-            font: v.name
+            font: v._n
         }
         ElmApp.ports.recvREGLCmd.send({
-            cmd: "loadFont",
+            _c: "loadFont",
             response
         });
     }
@@ -1109,15 +1101,15 @@ async function loadFont(v) {
 }
 
 function execCmd(v) {
-    if (v.cmd == "loadFont") {
+    if (v._c == "loadFont") {
         loadFont(v);
-    } else if (v.cmd == "loadTexture") {
-        loadTexture(v.name, v.opts);
-    } else if (v.cmd == "createGLProgram") {
-        createGLProgram(v.name, v.proto);
-    } else if (v.cmd == "config") {
+    } else if (v._c == "loadTexture") {
+        loadTexture(v._n, v.opts);
+    } else if (v._c == "createGLProgram") {
+        createGLProgram(v._n, v.proto);
+    } else if (v._c == "config") {
         config(v.config);
-    } else if (v.cmd == "start") {
+    } else if (v._c == "start") {
         start(v);
     } else {
         alert("No such command!");
