@@ -117,6 +117,9 @@ const poly = () => [
 const texture = () => [
     (x) => {
         const src = x["texture"];
+        if(!x["alpha"]){
+            x["alpha"] = 1.0;
+        }
         if (!loadedTextures[src]) {
             return null;
         }
@@ -136,7 +139,8 @@ const texture = () => [
             position: regl.prop('pos')
         },
         uniforms: {
-            texture: regl.prop('texture')
+            texture: regl.prop('texture'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -147,6 +151,9 @@ const texture = () => [
 
 const textureCropped = () => [
     (x) => {
+        if(!x["alpha"]){
+            x["alpha"] = 1.0;
+        }
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -162,7 +169,8 @@ const textureCropped = () => [
             position: regl.prop('pos')
         },
         uniforms: {
-            texture: regl.prop('texture')
+            texture: regl.prop('texture'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -173,6 +181,9 @@ const textureCropped = () => [
 
 const centeredTexture = () => [
     (x) => {
+        if(!x["alpha"]){
+            x["alpha"] = 1.0;
+        }
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -195,6 +206,7 @@ const centeredTexture = () => [
             texture: regl.prop('texture'),
             posize: regl.prop('posize'),
             angle: regl.prop('angle'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -205,6 +217,9 @@ const centeredTexture = () => [
 
 const centeredCroppedTexture = () => [
     (x) => {
+        if(!x["alpha"]){
+            x["alpha"] = 1.0;
+        }
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -238,6 +253,7 @@ const centeredCroppedTexture = () => [
             texture: regl.prop('texture'),
             posize: regl.prop('posize'),
             angle: regl.prop('angle'),
+            alpha: regl.prop('alpha')
         },
         elements: [
             0, 1, 2,
@@ -678,6 +694,9 @@ function getFreePalette() {
 }
 
 function drawSingleCommand(v) {
+    if (!v) {
+        return;
+    }
     // v is a command
     if (!v.args) {
         v.args = {};
@@ -705,6 +724,9 @@ function execProg(p, va) {
 function drawComp(v) {
     // v is a composition command
     // Return the id of the palette used
+    if (!v) {
+        return -1;
+    }
     const r1pid = drawCmd(v.r1);
     const r2pid = drawCmd(v.r2);
     const npid = getFreePalette();
@@ -762,6 +784,10 @@ function applyEffect(e, pid) {
 function drawGroup(v, prev) {
     // v is a group command
     // Return the id of the palette used
+
+    if (!v) {
+        return prev;
+    }
 
     // Special optimization
 
@@ -854,6 +880,9 @@ function drawGroup(v, prev) {
 }
 
 function drawCmd(v) {
+    if (!v) {
+        return -1;
+    }
     if (v.cmd == 0 || v.cmd == 1) {
         const pid = getFreePalette();
         palettes[pid]({}, () => {
@@ -901,12 +930,12 @@ async function step() {
     }
 
     // console.log(gview)
-    if (gview) {
+    // if (gview) {
         const pid = drawCmd(gview);
         if (pid >= 0) {
             drawPalette({ fbo: fbos[pid] });
         }
-    }
+    // }
 
     // const t3 = performance.now();
     // console.log("Time to render view: " + (t3 - t2) + "ms");
