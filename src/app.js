@@ -18,7 +18,7 @@ let userConfig = {
     interval: 0,
     virtWidth: 1920,
     virtHeight: 1080,
-    fboNum: 5
+    fboNum: 10
 };
 
 let fbos = [];
@@ -117,7 +117,7 @@ const poly = () => [
 const texture = () => [
     (x) => {
         const src = x["texture"];
-        if(!x["alpha"]){
+        if (!x["alpha"]) {
             x["alpha"] = 1.0;
         }
         if (!loadedTextures[src]) {
@@ -151,7 +151,7 @@ const texture = () => [
 
 const textureCropped = () => [
     (x) => {
-        if(!x["alpha"]){
+        if (!x["alpha"]) {
             x["alpha"] = 1.0;
         }
         const src = x["texture"];
@@ -181,7 +181,7 @@ const textureCropped = () => [
 
 const centeredTexture = () => [
     (x) => {
-        if(!x["alpha"]){
+        if (!x["alpha"]) {
             x["alpha"] = 1.0;
         }
         const src = x["texture"];
@@ -217,7 +217,7 @@ const centeredTexture = () => [
 
 const centeredCroppedTexture = () => [
     (x) => {
-        if(!x["alpha"]){
+        if (!x["alpha"]) {
             x["alpha"] = 1.0;
         }
         const src = x["texture"];
@@ -671,15 +671,37 @@ async function setView(view) {
     resolver();
 }
 
-// function sleep(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// }
-
 function updateElm(delta) {
     return new Promise((resolve, _) => {
         resolver = resolve;
         ElmApp.ports.reglupdate.send(delta);
     });
+}
+
+function allocNewFBO() {
+    const fb = regl.framebuffer({
+        color: regl.texture({
+            width: 1,
+            height: 1
+        }),
+        depth: false
+    });
+    fbos.push(fb);
+
+    palettes.push(regl({
+        framebuffer: fb,
+        uniforms: {
+            view: [userConfig.virtWidth, userConfig.virtHeight]
+        },
+        depth: { enable: false },
+        blend: {
+            enable: true,
+            func: {
+                src: 'one',
+                dst: 'one minus src alpha'
+            }
+        },
+    }));
 }
 
 function getFreePalette() {
@@ -690,7 +712,19 @@ function getFreePalette() {
             return i;
         }
     }
-    alert("No free palette found!");
+    console.warn("No free palette found!");
+    if (userConfig.fboNum > 1000) {
+        alert("Error: Exceeding maximum fbo number!")
+        return -1;
+    }
+    // Acquire a new FBO
+    allocNewFBO();
+    const vpWidth = regl._gl.drawingBufferWidth;
+    const vpHeight = regl._gl.drawingBufferHeight;
+    fbos[userConfig.fboNum].resize(vpWidth, vpHeight);
+    freePalette[userConfig.fboNum] = false;
+    userConfig.fboNum++;
+    return userConfig.fboNum - 1;
 }
 
 function drawSingleCommand(v) {
@@ -795,9 +829,9 @@ function drawGroup(v, prev) {
     const effects = v.e;
 
     if (cmds.length == 0) {
-        return -1;
+        return prev;
     }
-    if (cmds.length == 1 && cmds[0].cmd == 2) {
+    if (cmds.length == 1 && cmds[0] && cmds[0].cmd == 2) {
         // Single group command, concat effects
         cmds[0].e = cmds[0].e.concat(effects);
         if (effects.length == 0) {
@@ -929,13 +963,10 @@ async function step() {
         freePalette[i] = true;
     }
 
-    // console.log(gview)
-    // if (gview) {
-        const pid = drawCmd(gview);
-        if (pid >= 0) {
-            drawPalette({ fbo: fbos[pid] });
-        }
-    // }
+    const pid = drawCmd(gview);
+    if (pid >= 0) {
+        drawPalette({ fbo: fbos[pid] });
+    }
 
     // const t3 = performance.now();
     // console.log("Time to render view: " + (t3 - t2) + "ms");
@@ -982,28 +1013,7 @@ async function start(v) {
     }
 
     for (let i = 0; i < userConfig.fboNum; i++) {
-        fbos.push(regl.framebuffer({
-            color: regl.texture({
-                width: 1,
-                height: 1
-            }),
-            depth: false
-        }));
-
-        palettes.push(regl({
-            framebuffer: fbos[i],
-            uniforms: {
-                view: [userConfig.virtWidth, userConfig.virtHeight]
-            },
-            depth: { enable: false },
-            blend: {
-                enable: true,
-                func: {
-                    src: 'one',
-                    dst: 'one minus src alpha'
-                }
-            },
-        }));
+        allocNewFBO();
     }
 
     drawPalette = regl({
