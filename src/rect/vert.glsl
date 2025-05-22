@@ -4,6 +4,7 @@ attribute vec2 position;
 uniform vec4 posize;
 uniform float angle;
 uniform vec2 view;
+uniform vec4 camera;
 
 void main() {
     vec2 scaledVertex = (position - 0.5) * posize.zw;

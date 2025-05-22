@@ -13,5 +13,5 @@ void main() {
     }
     float alpha =  1. - smoothstep(radius - 1., radius + 1., distance);
     gl_FragColor = color * alpha;
-    gl_FragColor.a = alpha;
+    // gl_FragColor.a = alpha;
 }
