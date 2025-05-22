@@ -12,6 +12,9 @@ let ElmApp = null;
 
 let gview = null;
 
+// X, Y, Scale, Rotation
+let camera = [0.0, 0.0, 1.0, 0.0];
+
 let resolver = null;
 
 let userConfig = {
@@ -691,7 +694,10 @@ function allocNewFBO() {
     palettes.push(regl({
         framebuffer: fb,
         uniforms: {
-            view: [userConfig.virtWidth, userConfig.virtHeight]
+            view: [userConfig.virtWidth / 2, userConfig.virtHeight / 2],
+            camera: () => {
+                return camera;
+            }
         },
         depth: { enable: false },
         blend: {
@@ -908,6 +914,10 @@ function drawGroup(v, prev) {
 function drawCmd(v) {
     if (!v) {
         return -1;
+    }
+    if (v._sc){
+        // Set camera
+        camera = v._sc;
     }
     if (v._c == 0 || v._c == 1) {
         const pid = getFreePalette();
