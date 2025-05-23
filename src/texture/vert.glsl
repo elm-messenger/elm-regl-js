@@ -7,7 +7,6 @@ uniform vec4 camera;
 void main() {
     uv = texc;
     if (camera.w == 0.0){
-        // No rotation
         vec2 pos = (position - camera.xy) * camera.z / view;
         gl_Position = vec4(pos, 0, 1);
     } else {
