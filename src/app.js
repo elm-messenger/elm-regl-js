@@ -40,11 +40,47 @@ let browserSupportNow = (
 
 let navigationStartTime = browserSupportNow ? window.performance.timeOrigin : 0;
 
+const frags = {
+    "triangle": readFileSync('src/triangle/frag.glsl', 'utf8'),
+    "rect": readFileSync('src/rect/frag.glsl', 'utf8'),
+    "texture": readFileSync('src/texture/frag.glsl', 'utf8'),
+    "texture-centered": readFileSync('src/texture-centered/frag.glsl', 'utf8'),
+    "texture-cropped-centered": readFileSync('src/texture-cropped-centered/frag.glsl', 'utf8'),
+    "text": readFileSync('src/text/frag.glsl', 'utf8'),
+    "compositor": readFileSync('src/compositors/frag.glsl', 'utf8'),
+    "compFade": readFileSync('src/compFade/frag.glsl', 'utf8'),
+    "imgFade": readFileSync('src/imgFade/frag.glsl', 'utf8'),
+    "blur": readFileSync('src/blur/frag.glsl', 'utf8'),
+    "gblur": readFileSync('src/gblur/frag.glsl', 'utf8'),
+    "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
+    "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
+    "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
+    "circle": readFileSync('src/circle/frag.glsl', 'utf8')
+}
+
+const verts = {
+    "triangle": readFileSync('src/triangle/vert.glsl', 'utf8'),
+    "rect": readFileSync('src/rect/vert.glsl', 'utf8'),
+    "texture": readFileSync('src/texture/vert.glsl', 'utf8'),
+    "texture-centered": readFileSync('src/texture-centered/vert.glsl', 'utf8'),
+    "texture-cropped-centered": readFileSync('src/texture-cropped-centered/vert.glsl', 'utf8'),
+    "text": readFileSync('src/text/vert.glsl', 'utf8'),
+    "compositor": readFileSync('src/compositors/vert.glsl', 'utf8'),
+    "compFade": readFileSync('src/compFade/vert.glsl', 'utf8'),
+    "imgFade": readFileSync('src/imgFade/vert.glsl', 'utf8'),
+    "blur": readFileSync('src/blur/vert.glsl', 'utf8'),
+    "gblur": readFileSync('src/gblur/vert.glsl', 'utf8'),
+    "crt": readFileSync('src/crt/vert.glsl', 'utf8'),
+    "fxaa": readFileSync('src/fxaa/vert.glsl', 'utf8'),
+    "alphamult": readFileSync('src/alphamult/vert.glsl', 'utf8'),
+    "circle": readFileSync('src/circle/vert.glsl', 'utf8'),
+}
+
 const quad = () => [
     (x) => x
     , regl({
-        frag: readFileSync('src/triangle/frag.glsl', 'utf8'),
-        vert: readFileSync('src/triangle/vert.glsl', 'utf8'),
+        frag: frags["triangle"],
+        vert: verts["triangle"],
         attributes: {
             position: regl.prop('pos')
         },
@@ -58,11 +94,12 @@ const quad = () => [
         count: 6
     })]
 
+
 const rect = () => [
     (x) => x
     , regl({
-        frag: readFileSync('src/rect/frag.glsl', 'utf8'),
-        vert: readFileSync('src/rect/vert.glsl', 'utf8'),
+        frag: frags["rect"],
+        vert: verts["rect"],
         attributes: {
             position: [
                 0, 1,
@@ -86,8 +123,8 @@ const rect = () => [
 const triangle = () => [
     (x) => x,
     regl({
-        frag: readFileSync('src/triangle/frag.glsl', 'utf8'),
-        vert: readFileSync('src/triangle/vert.glsl', 'utf8'),
+        frag: frags["triangle"],
+        vert: verts["triangle"],
         attributes: {
             position: regl.prop('pos')
         },
@@ -97,6 +134,7 @@ const triangle = () => [
         count: 3
     })]
 
+
 const poly = () => [
     (x) => {
         if (!("prim" in x)) {
@@ -105,8 +143,8 @@ const poly = () => [
         return x;
     },
     regl({
-        frag: readFileSync('src/triangle/frag.glsl', 'utf8'),
-        vert: readFileSync('src/triangle/vert.glsl', 'utf8'),
+        frag: frags["triangle"],
+        vert: verts["triangle"],
         attributes: {
             position: regl.prop('pos')
         },
@@ -130,8 +168,8 @@ const texture = () => [
         return x;
     },
     regl({
-        frag: readFileSync('src/texture/frag.glsl', 'utf8'),
-        vert: readFileSync('src/texture/vert.glsl', 'utf8'),
+        frag: frags["texture"],
+        vert: verts["texture"],
         attributes: {
             texc: [
                 0, 1,
@@ -165,8 +203,8 @@ const textureCropped = () => [
         return x;
     },
     regl({
-        frag: readFileSync('src/texture/frag.glsl', 'utf8'),
-        vert: readFileSync('src/texture/vert.glsl', 'utf8'),
+        frag: frags["texture"],
+        vert: verts["texture"],
         attributes: {
             texc: regl.prop('texc'),
             position: regl.prop('pos')
@@ -195,8 +233,8 @@ const centeredTexture = () => [
         return x;
     },
     regl({
-        frag: readFileSync('src/texture-centered/frag.glsl', 'utf8'),
-        vert: readFileSync('src/texture-centered/vert.glsl', 'utf8'),
+        frag: frags["texture-centered"],
+        vert: verts["texture-centered"],
         attributes: {
             texc: [
                 0, 1,
@@ -241,8 +279,8 @@ const centeredCroppedTexture = () => [
         return x;
     },
     regl({
-        frag: readFileSync('src/texture-cropped-centered/frag.glsl', 'utf8'),
-        vert: readFileSync('src/texture-cropped-centered/vert.glsl', 'utf8'),
+        frag: frags["texture-cropped-centered"],
+        vert: verts["texture-cropped-centered"],
         attributes: {
             texc: regl.prop('texc'),
             texc2: [
@@ -284,8 +322,8 @@ const textbox = () => [
         return x;
     },
     regl({
-        frag: readFileSync('src/text/frag.glsl', 'utf8'),
-        vert: readFileSync('src/text/vert.glsl', 'utf8'),
+        frag: frags["text"],
+        vert: verts["text"],
         attributes: {
             position: regl.prop('position'),
             uv: regl.prop('uv')
@@ -305,8 +343,8 @@ const textbox = () => [
 const defaultCompositor = () => [
     x => x,
     regl({
-        frag: readFileSync('src/compositors/frag.glsl', 'utf8'),
-        vert: readFileSync('src/compositors/vert.glsl', 'utf8'),
+        frag: frags["compositor"],
+        vert: verts["compositor"],
         attributes: {
             texc: [
                 1, 1,
@@ -330,8 +368,8 @@ const defaultCompositor = () => [
 const compFade = () => [
     x => x,
     regl({
-        frag: readFileSync('src/compFade/frag.glsl', 'utf8'),
-        vert: readFileSync('src/compFade/vert.glsl', 'utf8'),
+        frag: frags["compFade"],
+        vert: verts["compFade"],
         attributes: {
             texc: [
                 1, 1,
@@ -363,8 +401,8 @@ const imgFade = () => [
         return x;
     },
     regl({
-        frag: readFileSync('src/imgFade/frag.glsl', 'utf8'),
-        vert: readFileSync('src/imgFade/vert.glsl', 'utf8'),
+        frag: frags["imgFade"],
+        vert: verts["imgFade"],
         attributes: {
             texc: [
                 1, 1,
@@ -390,8 +428,8 @@ const imgFade = () => [
 const blur = () => [
     x => x,
     regl({
-        frag: readFileSync('src/blur/frag.glsl', 'utf8'),
-        vert: readFileSync('src/blur/vert.glsl', 'utf8'),
+        frag: frags["blur"],
+        vert: verts["blur"],
         attributes: {
             texc: [
                 1, 1,
@@ -414,8 +452,8 @@ const blur = () => [
 const gblur = () => [
     x => x,
     regl({
-        frag: readFileSync('src/gblur/frag.glsl', 'utf8'),
-        vert: readFileSync('src/gblur/vert.glsl', 'utf8'),
+        frag: frags["gblur"],
+        vert: verts["gblur"],
         attributes: {
             texc: [
                 1, 1,
@@ -438,8 +476,8 @@ const gblur = () => [
 const crt = () => [
     x => x,
     regl({
-        frag: readFileSync('src/crt/frag.glsl', 'utf8'),
-        vert: readFileSync('src/crt/vert.glsl', 'utf8'),
+        frag: frags["crt"],
+        vert: verts["crt"],
         attributes: {
             texc: [
                 1, 1,
@@ -462,8 +500,8 @@ const crt = () => [
 const fxaa = () => [
     x => x,
     regl({
-        frag: readFileSync('src/fxaa/frag.glsl', 'utf8'),
-        vert: readFileSync('src/fxaa/vert.glsl', 'utf8'),
+        frag: frags["fxaa"],
+        vert: verts["fxaa"],
         attributes: {
             position: [
                 -1, 1,
@@ -485,8 +523,8 @@ const fxaa = () => [
 const alphamult = () => [
     x => x,
     regl({
-        frag: readFileSync('src/alphamult/frag.glsl', 'utf8'),
-        vert: readFileSync('src/alphamult/vert.glsl', 'utf8'),
+        frag: frags["alphamult"],
+        vert: verts["alphamult"],
         attributes: {
             texc: [
                 1, 1,
@@ -509,8 +547,8 @@ const alphamult = () => [
 const circle = () => [
     x => x,
     regl({
-        frag: readFileSync('src/circle/frag.glsl', 'utf8'),
-        vert: readFileSync('src/circle/vert.glsl', 'utf8'),
+        frag: frags["circle"],
+        vert: verts["circle"],
         attributes: {
             position: [
                 -1, -1,
@@ -817,6 +855,9 @@ function drawGroup(v, prev) {
     // v is a group command
     // Return the id of the palette used
 
+    // Callee-save camera
+    let prev_camera = camera;
+
     if (!v) {
         return prev;
     }
@@ -829,14 +870,10 @@ function drawGroup(v, prev) {
     if (cmds.length == 0) {
         return prev;
     }
-    if (cmds.length == 1 && cmds[0] && cmds[0]._c == 2) {
-        // Single group command, concat effects
-        cmds[0].e = cmds[0].e.concat(effects);
-        if (effects.length == 0) {
-            return drawGroup(cmds[0], prev);
-        } else {
-            return drawGroup(cmds[0], -1);
-        }
+
+    if (v._sc) {
+        // Set camera
+        camera = v._sc;
     }
 
     let curPalette = prev;
@@ -908,16 +945,13 @@ function drawGroup(v, prev) {
         curPalette = npid;
     }
 
+    camera = prev_camera;
     return curPalette;
 }
 
 function drawCmd(v) {
     if (!v) {
         return -1;
-    }
-    if (v._sc) {
-        // Set camera
-        camera = v._sc;
     }
     if (v._c == 0 || v._c == 1) {
         const pid = getFreePalette();
@@ -998,7 +1032,7 @@ async function start(v) {
     }
 
     // Set camera initial value
-    camera = [userConfig.virtWidth/2, userConfig.virtHeight/2, 1.0, 0.0];
+    camera = [userConfig.virtWidth / 2, userConfig.virtHeight / 2, 1.0, 0.0];
 
     for (let i = 0; i < userConfig.fboNum; i++) {
         allocNewFBO();
@@ -1039,7 +1073,7 @@ function loadGLProgram(prog_name, f) {
 function loadBuiltinGLProgram(prog_name) {
     // Initialize program
     if (programs[prog_name]) {
-        loadedPrograms[prog_name] = programs[prog_name]();
+        loadedPrograms[prog_name] = programs[prog_name](false);
     } else {
         alert("Program not found: " + prog_name);
     }
