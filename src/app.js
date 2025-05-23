@@ -855,6 +855,9 @@ function drawGroup(v, prev) {
     // v is a group command
     // Return the id of the palette used
 
+    // Callee-save camera
+    let prev_camera = camera;
+
     if (!v) {
         return prev;
     }
@@ -867,14 +870,10 @@ function drawGroup(v, prev) {
     if (cmds.length == 0) {
         return prev;
     }
-    if (cmds.length == 1 && cmds[0] && cmds[0]._c == 2) {
-        // Single group command, concat effects
-        cmds[0].e = cmds[0].e.concat(effects);
-        if (effects.length == 0) {
-            return drawGroup(cmds[0], prev);
-        } else {
-            return drawGroup(cmds[0], -1);
-        }
+
+    if (v._sc) {
+        // Set camera
+        camera = v._sc;
     }
 
     let curPalette = prev;
@@ -946,16 +945,13 @@ function drawGroup(v, prev) {
         curPalette = npid;
     }
 
+    camera = prev_camera;
     return curPalette;
 }
 
 function drawCmd(v) {
     if (!v) {
         return -1;
-    }
-    if (v._sc) {
-        // Set camera
-        camera = v._sc;
     }
     if (v._c == 0 || v._c == 1) {
         const pid = getFreePalette();
