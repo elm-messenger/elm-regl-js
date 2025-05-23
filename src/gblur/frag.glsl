@@ -27,7 +27,7 @@ void main() {
   }
   for(int i = -kSize; i <= kSize; ++i) {
     for(int j = -kSize; j <= kSize; ++j) {
-      vec4 c = texture2D(texture, uv + vec2(float(i) / view.x, float(j) / view.y));
+      vec4 c = texture2D(texture, uv + vec2(float(i) / (2.*view.x), float(j) / (-2.*view.y)));
       final_colour += kernel[kSize + j] * kernel[kSize + i] * c.rgb;
       maxa = max(maxa, c.a);
     }

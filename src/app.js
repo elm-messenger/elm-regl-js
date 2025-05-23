@@ -694,7 +694,7 @@ function allocNewFBO() {
     palettes.push(regl({
         framebuffer: fb,
         uniforms: {
-            view: [userConfig.virtWidth / 2, userConfig.virtHeight / 2],
+            view: [userConfig.virtWidth / 2, -userConfig.virtHeight / 2],
             camera: () => {
                 return camera;
             }
@@ -915,7 +915,7 @@ function drawCmd(v) {
     if (!v) {
         return -1;
     }
-    if (v._sc){
+    if (v._sc) {
         // Set camera
         camera = v._sc;
     }
@@ -996,6 +996,9 @@ async function start(v) {
     for (prog_name of toloadprograms) {
         loadBuiltinGLProgram(prog_name);
     }
+
+    // Set camera initial value
+    camera = [userConfig.virtWidth/2, userConfig.virtHeight/2, 1.0, 0.0];
 
     // Load arial font
 
