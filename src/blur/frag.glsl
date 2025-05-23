@@ -12,7 +12,7 @@ void main() {
     float maxa = 0.0;
     for(int x = -5; x <= 5; x++) {
         for(int y = -5; y <= 5; y++) {
-            vec4 c = texture2D(texture, uv + vec2(float(x) * radius / view.x, float(y) * radius / view.y));
+            vec4 c = texture2D(texture, uv + vec2(float(x) * radius / (2.*view.x), float(y) * radius / (-2.*view.y)));
             avg += (1.0 / 121.0) * c.xyz;
             maxa = max(maxa, c.a);
         }

@@ -12,6 +12,9 @@ let ElmApp = null;
 
 let gview = null;
 
+// X, Y, Scale, Rotation
+let camera = [0.0, 0.0, 1.0, 0.0];
+
 let resolver = null;
 
 let userConfig = {
@@ -691,7 +694,10 @@ function allocNewFBO() {
     palettes.push(regl({
         framebuffer: fb,
         uniforms: {
-            view: [userConfig.virtWidth, userConfig.virtHeight]
+            view: [userConfig.virtWidth / 2, -userConfig.virtHeight / 2],
+            camera: () => {
+                return camera;
+            }
         },
         depth: { enable: false },
         blend: {
@@ -728,7 +734,7 @@ function getFreePalette() {
 }
 
 function drawSingleCommand(v) {
-    if (!v) {
+    if (!v || v._c == undefined) {
         return;
     }
     // v is a command
@@ -739,7 +745,8 @@ function drawSingleCommand(v) {
         // REGL commands
         regl[v._n](v);
     } else {
-        alert("Unknown command: " + v._c);
+        console.log(v);
+        alert("Draw single command unknown command");
     }
 }
 
@@ -908,6 +915,10 @@ function drawCmd(v) {
     if (!v) {
         return -1;
     }
+    if (v._sc) {
+        // Set camera
+        camera = v._sc;
+    }
     if (v._c == 0 || v._c == 1) {
         const pid = getFreePalette();
         palettes[pid]({}, () => {
@@ -923,7 +934,7 @@ function drawCmd(v) {
     } else if (v._c == 3) {
         return drawComp(v);
     } else {
-        alert("Unknown command: " + v._c);
+        alert("drawCmd: Unknown command: " + v);
     }
 }
 
@@ -985,6 +996,9 @@ async function start(v) {
     for (prog_name of toloadprograms) {
         loadBuiltinGLProgram(prog_name);
     }
+
+    // Set camera initial value
+    camera = [userConfig.virtWidth/2, userConfig.virtHeight/2, 1.0, 0.0];
 
     for (let i = 0; i < userConfig.fboNum; i++) {
         allocNewFBO();
@@ -1083,6 +1097,7 @@ async function loadFont(v) {
 }
 
 function execCmd(v) {
+    // console.log(v);
     if (v._c == "loadFont") {
         loadFont(v);
     } else if (v._c == "loadTexture") {
