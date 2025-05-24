@@ -449,6 +449,54 @@ const blur = () => [
     })
 ]
 
+const blur2p1 = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/blur2p/frag1.glsl', 'utf8'),
+        vert: readFileSync('src/blur/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            radius: regl.prop('radius'),
+            texture: regl.prop('texture')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+const blur2p2 = () => [
+    x => x,
+    regl({
+        frag: readFileSync('src/blur2p/frag2.glsl', 'utf8'),
+        vert: readFileSync('src/blur/vert.glsl', 'utf8'),
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            radius: regl.prop('radius'),
+            texture: regl.prop('texture')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const gblur = () => [
     x => x,
     regl({
@@ -584,6 +632,8 @@ const programs = {
     centeredCroppedTexture,
     // Effects
     blur,
+    blur2p1,
+    blur2p2,
     gblur,
     crt,
     fxaa,
