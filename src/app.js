@@ -50,8 +50,11 @@ const frags = {
     "compositor": readFileSync('src/compositors/frag.glsl', 'utf8'),
     "compFade": readFileSync('src/compFade/frag.glsl', 'utf8'),
     "imgFade": readFileSync('src/imgFade/frag.glsl', 'utf8'),
-    "blur": readFileSync('src/blur/frag.glsl', 'utf8'),
+    "blur1": readFileSync('src/blur/frag1.glsl', 'utf8'),
+    "blur2": readFileSync('src/blur/frag2.glsl', 'utf8'),
     "gblur": readFileSync('src/gblur/frag.glsl', 'utf8'),
+    // "gblur2": readFileSync('src/gblur/frag2.glsl', 'utf8'),
+    // "gblur2": readFileSync('src/gblur/frag2.glsl', 'utf8'),
     "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
@@ -93,7 +96,6 @@ const quad = () => [
         ],
         count: 6
     })]
-
 
 const rect = () => [
     (x) => x
@@ -425,10 +427,10 @@ const imgFade = () => [
     })
 ]
 
-const blur = () => [
+const blurh = () => [
     x => x,
     regl({
-        frag: frags["blur"],
+        frag: frags["blur1"],
         vert: verts["blur"],
         attributes: {
             texc: [
@@ -449,35 +451,11 @@ const blur = () => [
     })
 ]
 
-const blur2p1 = () => [
+const blurv = () => [
     x => x,
     regl({
-        frag: readFileSync('src/blur2p/frag1.glsl', 'utf8'),
-        vert: readFileSync('src/blur/vert.glsl', 'utf8'),
-        attributes: {
-            texc: [
-                1, 1,
-                1, 0,
-                0, 0,
-                0, 1,]
-        },
-        uniforms: {
-            radius: regl.prop('radius'),
-            texture: regl.prop('texture')
-        },
-        elements: [
-            0, 1, 2,
-            0, 2, 3
-        ],
-        count: 6
-    })
-]
-
-const blur2p2 = () => [
-    x => x,
-    regl({
-        frag: readFileSync('src/blur2p/frag2.glsl', 'utf8'),
-        vert: readFileSync('src/blur/vert.glsl', 'utf8'),
+        frag: frags["blur2"],
+        vert: verts["blur"],
         attributes: {
             texc: [
                 1, 1,
@@ -520,6 +498,85 @@ const gblur = () => [
         count: 6
     })
 ]
+
+// function computeGaussianKernel(size, sigma) {
+//     const kernel = new Float32Array(size);
+//     const half = Math.floor(size / 2);
+//     let sum = 0.0;
+
+//     for (let i = 0; i < size; i++) {
+//         const x = i - half;
+//         const weight = Math.exp(-(x * x) / (2 * sigma * sigma));
+//         kernel[i] = weight;
+//         sum += weight;
+//     }
+
+//     // Normalize the kernel so the sum is 1
+//     for (let i = 0; i < size; i++) {
+//         kernel[i] /= sum;
+//     }
+
+//     return kernel;
+// }
+
+
+// const gblurh = () => [
+//     x => {
+//         // x["kernel"] = computeGaussianKernel(15, x.sigma);
+//         // console.log("Gaussian kernel:", x["kernel"]);
+//         return x;
+//     },
+//     regl({
+//         frag: frags["gblur1"],
+//         vert: verts["gblur"],
+//         attributes: {
+//             texc: [
+//                 1, 1,
+//                 1, 0,
+//                 0, 0,
+//                 0, 1,]
+//         },
+//         uniforms: {
+//             sigma: regl.prop('sigma'),
+//             texture: regl.prop('texture'),
+//             kernel: regl.buffer([1,2,3,4,5,6,7,8,9,0,1,2,3,4,5])
+//         },
+//         elements: [
+//             0, 1, 2,
+//             0, 2, 3
+//         ],
+//         count: 6
+//     })
+// ]
+
+
+// const gblurv = () => [
+//     x => {
+//         x["kernel"] = computeGaussianKernel(2 * ceil(x.sigma * 3), x.sigma);
+//         return x;
+//     },
+//     regl({
+//         frag: frags["gblur2"],
+//         vert: verts["gblur"],
+//         attributes: {
+//             texc: [
+//                 1, 1,
+//                 1, 0,
+//                 0, 0,
+//                 0, 1,]
+//         },
+//         uniforms: {
+//             sigma: regl.prop('sigma'),
+//             texture: regl.prop('texture'),
+//             kernel: regl.prop('kernel')
+//         },
+//         elements: [
+//             0, 1, 2,
+//             0, 2, 3
+//         ],
+//         count: 6
+//     })
+// ]
 
 const crt = () => [
     x => x,
@@ -631,9 +688,8 @@ const programs = {
     centeredTexture,
     centeredCroppedTexture,
     // Effects
-    blur,
-    blur2p1,
-    blur2p2,
+    blurh,
+    blurv,
     gblur,
     crt,
     fxaa,
@@ -1141,7 +1197,7 @@ function loadGLProgram(prog_name, f) {
 function loadBuiltinGLProgram(prog_name) {
     // Initialize program
     if (programs[prog_name]) {
-        loadedPrograms[prog_name] = programs[prog_name](false);
+        loadedPrograms[prog_name] = programs[prog_name]();
     } else {
         alert("Program not found: " + prog_name);
     }

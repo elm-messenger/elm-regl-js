@@ -1,4 +1,8 @@
 precision mediump float;
+
+#define BLUR_RADIUS 3
+#define KERNEL_SIZE (2 * BLUR_RADIUS + 1)
+
 uniform sampler2D texture;
 uniform float radius;
 uniform vec2 view;
@@ -13,10 +17,10 @@ void main() {
     vec3 avg = vec3(0.0);
     float maxa = 0.0;
 
-    for (int i = -5; i <= 5; i++) {
+    for (int i = -BLUR_RADIUS; i <= BLUR_RADIUS; i++) {
         vec2 offset = vec2(float(i) * radius / view.x, 0.0);
         vec4 c = texture2D(texture, uv + offset);
-        avg += c.rgb / 11.0;
+        avg += c.rgb / float(KERNEL_SIZE);
         maxa = max(maxa, c.a);
     }
 
