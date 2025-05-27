@@ -53,8 +53,6 @@ const frags = {
     "blur1": readFileSync('src/blur/frag1.glsl', 'utf8'),
     "blur2": readFileSync('src/blur/frag2.glsl', 'utf8'),
     "gblur": readFileSync('src/gblur/frag.glsl', 'utf8'),
-    // "gblur2": readFileSync('src/gblur/frag2.glsl', 'utf8'),
-    // "gblur2": readFileSync('src/gblur/frag2.glsl', 'utf8'),
     "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
@@ -475,7 +473,8 @@ const blurv = () => [
     })
 ]
 
-const gblur = () => [
+
+const gblurh = () => [
     x => x,
     regl({
         frag: frags["gblur"],
@@ -488,8 +487,9 @@ const gblur = () => [
                 0, 1,]
         },
         uniforms: {
-            sigma: regl.prop('sigma'),
-            texture: regl.prop('texture')
+            dir: [1, 0],
+            texture: regl.prop('texture'),
+            radius: regl.prop('radius')
         },
         elements: [
             0, 1, 2,
@@ -499,84 +499,31 @@ const gblur = () => [
     })
 ]
 
-// function computeGaussianKernel(size, sigma) {
-//     const kernel = new Float32Array(size);
-//     const half = Math.floor(size / 2);
-//     let sum = 0.0;
 
-//     for (let i = 0; i < size; i++) {
-//         const x = i - half;
-//         const weight = Math.exp(-(x * x) / (2 * sigma * sigma));
-//         kernel[i] = weight;
-//         sum += weight;
-//     }
-
-//     // Normalize the kernel so the sum is 1
-//     for (let i = 0; i < size; i++) {
-//         kernel[i] /= sum;
-//     }
-
-//     return kernel;
-// }
-
-
-// const gblurh = () => [
-//     x => {
-//         // x["kernel"] = computeGaussianKernel(15, x.sigma);
-//         // console.log("Gaussian kernel:", x["kernel"]);
-//         return x;
-//     },
-//     regl({
-//         frag: frags["gblur1"],
-//         vert: verts["gblur"],
-//         attributes: {
-//             texc: [
-//                 1, 1,
-//                 1, 0,
-//                 0, 0,
-//                 0, 1,]
-//         },
-//         uniforms: {
-//             sigma: regl.prop('sigma'),
-//             texture: regl.prop('texture'),
-//             kernel: regl.buffer([1,2,3,4,5,6,7,8,9,0,1,2,3,4,5])
-//         },
-//         elements: [
-//             0, 1, 2,
-//             0, 2, 3
-//         ],
-//         count: 6
-//     })
-// ]
-
-
-// const gblurv = () => [
-//     x => {
-//         x["kernel"] = computeGaussianKernel(2 * ceil(x.sigma * 3), x.sigma);
-//         return x;
-//     },
-//     regl({
-//         frag: frags["gblur2"],
-//         vert: verts["gblur"],
-//         attributes: {
-//             texc: [
-//                 1, 1,
-//                 1, 0,
-//                 0, 0,
-//                 0, 1,]
-//         },
-//         uniforms: {
-//             sigma: regl.prop('sigma'),
-//             texture: regl.prop('texture'),
-//             kernel: regl.prop('kernel')
-//         },
-//         elements: [
-//             0, 1, 2,
-//             0, 2, 3
-//         ],
-//         count: 6
-//     })
-// ]
+const gblurv = () => [
+    x => x,
+    regl({
+        frag: frags["gblur"],
+        vert: verts["gblur"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            dir: [0, 1],
+            texture: regl.prop('texture'),
+            radius: regl.prop('radius')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
 
 const crt = () => [
     x => x,
@@ -690,7 +637,8 @@ const programs = {
     // Effects
     blurh,
     blurv,
-    gblur,
+    gblurh,
+    gblurv,
     crt,
     fxaa,
     alphamult,

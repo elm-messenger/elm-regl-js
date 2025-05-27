@@ -18,7 +18,7 @@ void main() {
     float maxa = 0.0;
 
     for(int i = -BLUR_RADIUS; i <= BLUR_RADIUS; i++) {
-        vec2 offset = vec2(0.0, float(i) * radius / view.y);
+        vec2 offset = vec2(0.0, float(i) * radius / (2. * -view.y));
         vec4 c = texture2D(texture, uv + offset);
         avg += c.rgb / float(KERNEL_SIZE);
         maxa = max(maxa, c.a);
