@@ -8,8 +8,6 @@ uniform vec4 camera;
 void main() {
     vUv = uv;
     vec2 wpos = position + offset;
-    // gl_Position = vec4(((position.x + offset.x) / view.x) * 2. - 1., 1. - ((position.y + offset.y) / view.y) * 2., 0, 1);
-
     if (camera.w == 0.0){
         // No rotation
         vec2 pos = (wpos - camera.xy) * camera.z / view;

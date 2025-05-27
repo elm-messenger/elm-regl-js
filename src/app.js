@@ -50,7 +50,8 @@ const frags = {
     "compositor": readFileSync('src/compositors/frag.glsl', 'utf8'),
     "compFade": readFileSync('src/compFade/frag.glsl', 'utf8'),
     "imgFade": readFileSync('src/imgFade/frag.glsl', 'utf8'),
-    "blur": readFileSync('src/blur/frag.glsl', 'utf8'),
+    "blur1": readFileSync('src/blur/frag1.glsl', 'utf8'),
+    "blur2": readFileSync('src/blur/frag2.glsl', 'utf8'),
     "gblur": readFileSync('src/gblur/frag.glsl', 'utf8'),
     "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
@@ -93,7 +94,6 @@ const quad = () => [
         ],
         count: 6
     })]
-
 
 const rect = () => [
     (x) => x
@@ -425,10 +425,10 @@ const imgFade = () => [
     })
 ]
 
-const blur = () => [
+const blurh = () => [
     x => x,
     regl({
-        frag: frags["blur"],
+        frag: frags["blur1"],
         vert: verts["blur"],
         attributes: {
             texc: [
@@ -449,7 +449,32 @@ const blur = () => [
     })
 ]
 
-const gblur = () => [
+const blurv = () => [
+    x => x,
+    regl({
+        frag: frags["blur2"],
+        vert: verts["blur"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            radius: regl.prop('radius'),
+            texture: regl.prop('texture')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+
+const gblurh = () => [
     x => x,
     regl({
         frag: frags["gblur"],
@@ -462,8 +487,35 @@ const gblur = () => [
                 0, 1,]
         },
         uniforms: {
-            sigma: regl.prop('sigma'),
-            texture: regl.prop('texture')
+            dir: [1, 0],
+            texture: regl.prop('texture'),
+            radius: regl.prop('radius')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+
+const gblurv = () => [
+    x => x,
+    regl({
+        frag: frags["gblur"],
+        vert: verts["gblur"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            dir: [0, 1],
+            texture: regl.prop('texture'),
+            radius: regl.prop('radius')
         },
         elements: [
             0, 1, 2,
@@ -583,8 +635,10 @@ const programs = {
     centeredTexture,
     centeredCroppedTexture,
     // Effects
-    blur,
-    gblur,
+    blurh,
+    blurv,
+    gblurh,
+    gblurv,
     crt,
     fxaa,
     alphamult,
@@ -1073,7 +1127,7 @@ function loadGLProgram(prog_name, f) {
 function loadBuiltinGLProgram(prog_name) {
     // Initialize program
     if (programs[prog_name]) {
-        loadedPrograms[prog_name] = programs[prog_name](false);
+        loadedPrograms[prog_name] = programs[prog_name]();
     } else {
         alert("Program not found: " + prog_name);
     }
