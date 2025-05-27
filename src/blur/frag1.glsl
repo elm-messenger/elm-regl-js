@@ -14,16 +14,17 @@ void main() {
         return;
     }
 
-    vec3 avg = vec3(0.0);
+    vec4 avg = vec4(0.0);
     float maxa = 0.0;
 
     for (int i = -BLUR_RADIUS; i <= BLUR_RADIUS; i++) {
         vec2 offset = vec2(float(i) * radius / (2. * view.x), 0.0);
         vec4 c = texture2D(texture, uv + offset);
-        avg += c.rgb / float(KERNEL_SIZE);
-        maxa = max(maxa, c.a);
+        avg += c / float(KERNEL_SIZE);
     }
+    if (avg.a < 0.01){
+        discard;
+    }
+    gl_FragColor = avg;
 
-    if (maxa < 0.01) discard;
-    gl_FragColor = vec4(avg, maxa);
 }
