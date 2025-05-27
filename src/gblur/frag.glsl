@@ -27,5 +27,5 @@ void main() {
 	sum += texture2D(texture, vec2(uv.x + 4.0*blurx*hstep, uv.y + 4.0*blury*vstep)) * 0.0162162162;
 
     if (sum.a < 0.01) discard;
-    gl_FragColor = vec4(sum.rgb, 1.0);
+    gl_FragColor = sum;
 }
