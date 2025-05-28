@@ -76,12 +76,12 @@ function Text(font) {
             const char = text[cursor];
 
             // Skip whitespace at start of line
-            if (!line.width && whitespace.test(char)) {
-                cursor++;
-                wordCursor = cursor;
-                wordWidth = 0;
-                continue;
-            }
+            // if (!line.width && whitespace.test(char)) {
+            //     cursor++;
+            //     wordCursor = cursor;
+            //     wordWidth = 0;
+            //     continue;
+            // }
 
             // If newline char, skip to next line
             if (newline.test(char)) {
