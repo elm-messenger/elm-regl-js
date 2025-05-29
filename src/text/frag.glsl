@@ -19,6 +19,6 @@ void main() {
     float alpha = clamp(screenPxDistance + thickness, 0.0, 1.0);
     if(alpha < 0.01)
         discard;
-    gl_FragColor.rgb = color.rgb * color.a;
+    gl_FragColor.rgb = color.rgb * color.a * alpha;
     gl_FragColor.a = alpha * color.a;
 }
