@@ -1,4 +1,13 @@
 
+function FontManager(){
+    const _this = this;
+    let loadedFonts = {};
+
+    function loadFont(texture, fontObj){
+
+    }
+}
+
 function Text(font) {
     const _this = this;
     let glyphs, buffers;
@@ -49,6 +58,7 @@ function Text(font) {
     }
 
     function layout() {
+        // Calculate the layout before printing text
         const lines = [];
 
         let cursor = 0;
@@ -155,6 +165,7 @@ function Text(font) {
     }
 
     function populateBuffers(lines) {
+        // Get actual buffers from layout
         const texW = font.common.scaleW;
         const texH = font.common.scaleH;
 
