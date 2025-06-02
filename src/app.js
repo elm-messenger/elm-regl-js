@@ -1,12 +1,14 @@
 let regl = null;
 const readFileSync = require('fs').readFileSync;
-const Text = require('./text.js');
+const TM = require('./text.js');
 
 const loadedPrograms = {};
 
 const loadedTextures = {};
 
-const loadedFonts = {};
+// const loadedFonts = {};
+
+const TextManager = new TM();
 
 let ElmApp = null;
 
@@ -305,20 +307,20 @@ const centeredCroppedTexture = () => [
 
 const textbox = () => [
     (x) => {
-        const font = x.font;
-        if (!loadedFonts[font]) {
-            return null;
+        if (x.font) {
+            x.fonts = [x.font];
         }
         if (x["width"] && x["width"] <= 0) {
             x["width"] = Infinity;
         }
-        loadedFonts[font].text.remake(x)
-        x.tMap = loadedFonts[font].texture
-        x.position = loadedFonts[font].text.buffers.position
-        x.elem = loadedFonts[font].text.buffers.index
-        x.uv = loadedFonts[font].text.buffers.uv
+        const res = TextManager.makeText(x);
+        // loadedFonts[font].text.remake(x)
+        x.tMap = TextManager.getFont();
+        // x.position = loadedFonts[font].text.buffers.position
+        // x.elem = loadedFonts[font].text.buffers.index
+        // x.uv = loadedFonts[font].text.buffers.uv
         x.thickness = x.thickness ? x.thickness : 0.5;
-        x.unitRange = loadedFonts[font].text.unitRange;
+        // x.unitRange = loadedFonts[font].text.unitRange;
         return x;
     },
     regl({
@@ -1089,22 +1091,7 @@ async function start(v) {
     camera = [userConfig.virtWidth / 2, userConfig.virtHeight / 2, 1.0, 0.0];
 
     // Load arial font
-
-    const fontjsonObject = require("./consolas/Consolas");
-    const fontimg = require("./consolas/ConsolasImage")
-    const img = new Image();
-    img.src = fontimg;
-    await img.decode();
-    const texture = regl.texture({
-        data: img,
-        mag: "linear",
-        min: "linear",
-        flipY: true
-    })
-    loadedFonts["consolas"] = {
-        texture: texture,
-        text: new Text(fontjsonObject)
-    }
+    await TextManager.init();
 
     for (let i = 0; i < userConfig.fboNum; i++) {
         allocNewFBO();
@@ -1175,20 +1162,17 @@ function config(c) {
 }
 
 async function loadFont(v) {
-    let nfont = {}
     const fontjson = await (await fetch(v.json)).json();
     const image = new Image();
     image.src = v.img;
 
     image.onload = () => {
-        nfont.texture = regl.texture({
+        TextManager.loadFont(v._n, regl.texture({
             data: image,
             mag: "linear",
             min: "linear",
             flipY: true
-        });
-        nfont.text = new Text(fontjson)
-        loadedFonts[v._n] = nfont;
+        }), fontjson);
         const response = {
             font: v._n
         }
