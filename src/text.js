@@ -46,7 +46,7 @@ function FontManager(regl) {
         }
         if (!loadedTexture.hasOwnProperty(font_texture)) {
             const image = new Image();
-            image.src = v.img;
+            image.src = font_texture;
             await image.decode();
             const texture = regl.texture({
                 data: image,
@@ -58,8 +58,22 @@ function FontManager(regl) {
         }
     }
 
-    function getTexFromFont(name) {
-        return loadedTexture[loadedFonts[name].texture];
+    function getTexFromFont(opts) {
+        let textName = null;
+        for (const f of opts.fonts) {
+            if (!loadedFonts.hasOwnProperty(f)) {
+                throw new Error("Font not loaded: " + f);
+            }
+            if (textName === null) {
+                textName = loadedFonts[f].texture;
+            } else if (textName !== loadedFonts[f].texture) {
+                throw new Error("Fonts have different textures: " + textName + " and " + loadedFonts[f].texture);
+            }
+        }
+        if (!loadedTexture.hasOwnProperty(textName)) {
+            throw new Error("Texture not loaded: " + textName);
+        }
+        return loadedTexture[textName];
     }
 
     function getFont(name) {
@@ -139,6 +153,9 @@ function FontManager(regl) {
                 let charFontText;
                 let glyph;
                 for (let i = 0; i < opts.fonts.length; ++i) {
+                    if (!loadedFonts.hasOwnProperty(opts.fonts[i])) {
+                        throw new Error("Font not loaded: " + opts.fonts[i]);
+                    }
                     charFontText = loadedFonts[opts.fonts[i]].text;
                     const gs = charFontText.glyphs;
                     if (gs.hasOwnProperty(char)) {
@@ -150,7 +167,7 @@ function FontManager(regl) {
                 }
                 if (charFont === "") {
                     // Not found
-                    throw new Error("Character not found");
+                    throw new Error(`Character '${char}' not found`);
                 }
 
                 if (charFont === prevcharFont) {
@@ -215,6 +232,15 @@ function FontManager(regl) {
         let y = 0;
         let j = 0;
 
+        if (opts.valign === "top") {
+        } else if (opts.valign === "center") {
+            const totalHeight = lines.length * opts.size * opts.lineHeight;
+            y = -totalHeight * 0.5;
+        } else if (opts.valign === "bottom") {
+            const totalHeight = lines.length * opts.size * opts.lineHeight;
+            y = -totalHeight;
+        }
+
         for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
             let line = lines[lineIndex];
 
@@ -226,11 +252,6 @@ function FontManager(regl) {
                     x -= line.width * 0.5;
                 } else if (opts.align === 'right') {
                     x -= line.width;
-                }
-                if (opts.baseline == "center") {
-                    y -= 0.5 * opts.size;
-                } else if (opts.baseline == "bottom") {
-                    y -= opts.size;
                 }
 
                 // If space, don't add to geometry
@@ -280,7 +301,7 @@ function FontManager(regl) {
         if (opts1.tabSize !== opts2.tabSize) return false;
         if (opts1.wordBreak !== opts2.wordBreak) return false;
         if (opts1.it !== opts2.it) return false;
-        if (opts1.baseline !== opts2.baseline) return false;
+        if (opts1.valign !== opts2.valign) return false;
         if (opts1.fonts.length !== opts2.fonts.length) return false;
         for (let i = 0; i < opts1.fonts.length; i++) {
             if (opts1.fonts[i] !== opts2.fonts[i]) return false;
@@ -298,7 +319,7 @@ function FontManager(regl) {
         if (opts.tabSize == null) opts.tabSize = 4;
         if (opts.wordBreak == null) opts.wordBreak = false;
         if (opts.it == null) opts.it = 0;
-        if (opts.baseline == null) opts.baseline = "top";
+        if (opts.valign == null) opts.valign = "top";
         const hashText = simpleHash(opts.text);
         if (fontCache.hasOwnProperty(hashText)) {
             const cached = fontCache[hashText];

@@ -321,7 +321,7 @@ const textbox = () => [
             x["width"] = Infinity;
         }
         const res = TextManager.makeText(x);
-        x.tMap = TextManager.getTexFromFont(x.fonts[0]);
+        x.tMap = TextManager.getTexFromFont(x);
         x.position = res.position;
         x.uv = res.uv;
         x.elem = res.index;
@@ -1102,7 +1102,6 @@ async function start(v) {
     // Set camera initial value
     camera = [userConfig.virtWidth / 2, userConfig.virtHeight / 2, 1.0, 0.0];
 
-    TextManager = new TM(regl);
 
     // Load arial font
     await TextManager.init();
@@ -1167,6 +1166,7 @@ function init(canvas, app, override_conf) {
         defconfig[key] = override_conf[key];
     }
     regl = require('regl')(defconfig);
+    TextManager = new TM(regl);
 }
 
 function config(c) {
@@ -1187,9 +1187,9 @@ async function loadFont(v) {
 }
 
 function execCmd(v) {
+    // NOTE. May happen before start
     // console.log(v);
     try {
-
         if (v._c == "loadFont") {
             loadFont(v);
         } else if (v._c == "loadTexture") {
