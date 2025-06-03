@@ -9,7 +9,7 @@ function simpleHash(str) {
         hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
         hash = hash & hash; // Convert to 32bit integer
     }
-    return Math.abs(hash).toString(16); // Return absolute value as hex
+    return Math.abs(hash);
 }
 
 function FontManager(regl) {
