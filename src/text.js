@@ -148,15 +148,14 @@ function FontManager(regl) {
                         wordWidth += kern;
                     }
                 }
-
+                console.log("push", glyph);
                 line.glyphs.push([glyph, line.width]);
                 totCharNum++;
                 // Add letterspacing
                 advance += opts.letterSpacing * opts.size;
 
-                advance += glyph.xadvance * opts.size / charFontText.fontWidth;
+                advance += glyph.xadvance * opts.size / charFontText.fontHeight;
             }
-
             line.width += advance;
             wordWidth += advance;
 
@@ -178,7 +177,7 @@ function FontManager(regl) {
                     continue;
 
                     // If not first word, undo current word and cursor and create new line
-                } else if (!wordBreak && wordWidth !== line.width) {
+                } else if (!opts.wordBreak && wordWidth !== line.width) {
                     let numGlyphs = cursor - wordCursor + 1;
                     line.glyphs.splice(-numGlyphs, numGlyphs);
                     cursor = wordCursor;
@@ -192,13 +191,15 @@ function FontManager(regl) {
         }
         // Remove last line if empty
         if (!line.width) lines.pop();
-
         return [lines, totCharNum];
     }
 
 
-    function populateBuffers(lines, opts, buffers) {
+    function populateBuffers(lines, opts) {
         // Get actual buffers from layout
+
+        const buffers = createGeometry(lines[1]);
+        lines = lines[0];
 
         let y = 0;
         let j = 0;
@@ -223,12 +224,12 @@ function FontManager(regl) {
 
                 // If space, don't add to geometry
                 // if (whitespace.test(glyph.char)) continue;
-
+                let scale = opts.size / glyph.fh;
                 // Apply char sprite offsets
                 x += glyph.xoffset * scale;
                 let oldy = y;
                 y += glyph.yoffset * scale;
-
+                console.log(glyph);
                 // each letter is a quad. axis bottom left
                 let w = glyph.width * scale;
                 let h = glyph.height * scale;
@@ -259,9 +260,16 @@ function FontManager(regl) {
     }
 
     function makeText(opts) {
+        if (opts.width == null) opts.width = Infinity;
+        if (opts.align == null) opts.align = "left";
+        if (opts.size == null) opts.size = 24;
+        if (opts.letterSpacing == null) opts.letterSpacing = 0;
+        if (opts.lineHeight == null) opts.lineHeight = 1;
+        if (opts.wordSpacing == null) opts.wordSpacing = 0;
+        if (opts.wordBreak == null) opts.wordBreak = false;
+        if (opts.it == null) opts.it = 0;
         const lines = layout(opts);
-        createGeometry(lines[1]);
-        const res = populateBuffers(lines[0], opts);
+        const res = populateBuffers(lines, opts);
         return res;
     }
 
@@ -294,6 +302,7 @@ function Text(font) {
             d.uw = uw;
             d.v = v;
             d.vh = vh;
+            d.fh = font.common.lineHeight;
             _this.glyphs[d.char] = d;
         });
         _this.fontHeight = font.common.lineHeight;
