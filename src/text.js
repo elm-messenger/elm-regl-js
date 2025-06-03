@@ -111,14 +111,16 @@ function FontManager(regl) {
 
             // If whitespace, update location of current word for line breaks
             if (whitespace.test(char)) {
-                wordCursor = cursor;
+                wordCursor = cursor + 1;
                 wordWidth = 0;
 
+                const ft = loadedFonts[opts.fonts[0]].text;
+                const space_advance = ft.spaceadvance * opts.size / ft.fontHeight;
                 // Add wordspacing
                 if (char === '\t') {
-                    advance += opts.wordSpacing * opts.tabsize * opts.size;
+                    advance += opts.wordSpacing * opts.tabSize * space_advance;
                 } else {
-                    advance += opts.wordSpacing * opts.size;
+                    advance += opts.wordSpacing * space_advance;
                 }
             } else {
                 // Find the glyph from font
@@ -148,25 +150,23 @@ function FontManager(regl) {
                         wordWidth += kern;
                     }
                 }
-                console.log("push", glyph);
                 line.glyphs.push([glyph, line.width]);
                 totCharNum++;
                 // Add letterspacing
-                advance += opts.letterSpacing * opts.size;
 
-                advance += glyph.xadvance * opts.size / charFontText.fontHeight;
+                advance += (opts.letterSpacing + glyph.xadvance) * opts.size / charFontText.fontHeight;
             }
             line.width += advance;
             wordWidth += advance;
 
             // If width defined
             if (line.width > opts.width) {
-
+                // console.log(line.width, opts.width, char, cursor, wordCursor, wordWidth);
                 if (whitespace.test(char)) {
                     // If whitespace, ignore this and create new line
-
                     line.width -= advance;
                     line = newLine();
+                    cursor++;
                     continue;
                 }
                 // If can break words, undo latest glyph if line not empty and create new line
@@ -229,7 +229,6 @@ function FontManager(regl) {
                 x += glyph.xoffset * scale;
                 let oldy = y;
                 y += glyph.yoffset * scale;
-                console.log(glyph);
                 // each letter is a quad. axis bottom left
                 let w = glyph.width * scale;
                 let h = glyph.height * scale;
@@ -265,7 +264,8 @@ function FontManager(regl) {
         if (opts.size == null) opts.size = 24;
         if (opts.letterSpacing == null) opts.letterSpacing = 0;
         if (opts.lineHeight == null) opts.lineHeight = 1;
-        if (opts.wordSpacing == null) opts.wordSpacing = 0;
+        if (opts.wordSpacing == null) opts.wordSpacing = 1;
+        if (opts.tabSize == null) opts.tabSize = 4;
         if (opts.wordBreak == null) opts.wordBreak = false;
         if (opts.it == null) opts.it = 0;
         const lines = layout(opts);
@@ -305,6 +305,10 @@ function Text(font) {
             d.fh = font.common.lineHeight;
             _this.glyphs[d.char] = d;
         });
+        if (!_this.glyphs.hasOwnProperty(" ")) {
+            throw new Error("Font does not have space character defined");
+        }
+        _this.spaceadvance = _this.glyphs[" "].xadvance;
         _this.fontHeight = font.common.lineHeight;
         _this.baseline = font.common.base;
         // Use baseline so that actual text height is as close to 'size' value as possible
