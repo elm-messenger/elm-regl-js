@@ -2,7 +2,7 @@
 const newline = /\n/;
 const whitespace = /\s/;
 
-function FontManager() {
+function FontManager(regl) {
     const _this = this;
     let loadedFonts = {};
     let loadedTexture = {};
@@ -24,6 +24,7 @@ function FontManager() {
             texture: "consolas",
             text: new Text(fontjsonObject)
         }
+        loadedTexture["consolas"] = texture;
     }
 
     async function loadFont(name, font_texture, font_json) {
@@ -44,6 +45,10 @@ function FontManager() {
             })
             loadedTexture[font_texture] = texture;
         }
+    }
+
+    function getTexFromFont(name) {
+        return loadedTexture[loadedFonts[name].texture];
     }
 
     function getFont(name) {
@@ -111,9 +116,9 @@ function FontManager() {
 
                 // Add wordspacing
                 if (char === '\t') {
-                    advance += wordSpacing * opts.tabsize * size;
+                    advance += opts.wordSpacing * opts.tabsize * opts.size;
                 } else {
-                    advance += wordSpacing * size;
+                    advance += opts.wordSpacing * opts.size;
                 }
             } else {
                 // Find the glyph from font
@@ -147,9 +152,9 @@ function FontManager() {
                 line.glyphs.push([glyph, line.width]);
                 totCharNum++;
                 // Add letterspacing
-                advance += opts.letterSpacing * size;
+                advance += opts.letterSpacing * opts.size;
 
-                advance += glyph.xadvance * size / charFontText.fontWidth;
+                advance += glyph.xadvance * opts.size / charFontText.fontWidth;
             }
 
             line.width += advance;
@@ -249,7 +254,8 @@ function FontManager() {
             y += opts.size * opts.lineHeight;
         }
 
-        return [buffers, lines.length, _this.numLines * opts.size * opts.lineHeight, Math.max(...lines.map((line) => line.width))];
+        // return [buffers, lines.length, _this.numLines * opts.size * opts.lineHeight, Math.max(...lines.map((line) => line.width))];
+        return buffers;
     }
 
     function makeText(opts) {
@@ -259,6 +265,11 @@ function FontManager() {
         return res;
     }
 
+    this.init = init;
+    this.loadFont = loadFont;
+    this.getTexFromFont = getTexFromFont;
+    this.getFont = getFont;
+    this.makeText = makeText;
 }
 
 function Text(font) {
@@ -302,7 +313,7 @@ function Text(font) {
         }
         return 0;
     }
-
+    this.getKernPairOffset = getKernPairOffset;
 }
 
 module.exports = FontManager;

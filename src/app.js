@@ -6,13 +6,13 @@ const loadedPrograms = {};
 
 const loadedTextures = {};
 
-// const loadedFonts = {};
-
-const TextManager = new TM();
+let TextManager = null;
 
 let ElmApp = null;
 
 let gview = null;
+
+let global_error = 0;
 
 // X, Y, Scale, Rotation
 let camera = [0.0, 0.0, 1.0, 0.0];
@@ -314,13 +314,12 @@ const textbox = () => [
             x["width"] = Infinity;
         }
         const res = TextManager.makeText(x);
-        // loadedFonts[font].text.remake(x)
-        x.tMap = TextManager.getFont();
-        // x.position = loadedFonts[font].text.buffers.position
-        // x.elem = loadedFonts[font].text.buffers.index
-        // x.uv = loadedFonts[font].text.buffers.uv
+        x.tMap = TextManager.getTexFromFont(x.fonts[0]);
+        x.position = res.position;
+        x.uv = res.uv;
+        x.elem = res.index;
         x.thickness = x.thickness ? x.thickness : 0.5;
-        // x.unitRange = loadedFonts[font].text.unitRange;
+        x.unitRange = TextManager.getFont(x.fonts[0]).text.unitRange;
         return x;
     },
     regl({
@@ -682,15 +681,14 @@ function loadTexture(texture_name, opts) {
         }
     }
     image.onerror = () => {
-        alert("Error loading texture: " + image.src)
+        throw new Error("Error loading texture: " + image.src);
     }
 }
 
 
 function createGLProgram(prog_name, proto) {
     if (loadedPrograms[prog_name]) {
-        alert("Program already exists: " + prog_name);
-        return;
+        throw new Error("Program already exists: " + prog_name);
     }
     // console.log("Creating program: " + prog_name);
     const uniforms = proto.uniforms ? proto.uniforms : {};
@@ -814,8 +812,7 @@ function getFreePalette() {
     }
     console.warn("No free palette found!");
     if (userConfig.fboNum > 1000) {
-        alert("Error: Exceeding maximum fbo number!")
-        return -1;
+        throw new Error("Error: Exceeding maximum fbo number!");
     }
     // Acquire a new FBO
     allocNewFBO();
@@ -840,7 +837,7 @@ function drawSingleCommand(v) {
         regl[v._n](v);
     } else {
         console.log(v);
-        alert("Draw single command unknown command");
+        throw new Error("drawSingleCommand: Unknown command type: " + v._c);
     }
 }
 
@@ -1024,46 +1021,57 @@ function drawCmd(v) {
     } else if (v._c == 3) {
         return drawComp(v);
     } else {
-        alert("drawCmd: Unknown command: " + v);
+        throw new Error("drawCmd: Unknown command: " + v._c);
     }
 }
 
 async function step() {
-    if (userConfig.interval > 0) {
-        // Call step in interval
-        setTimeout(step, userConfig.interval);
-    } else {
-        requestAnimationFrame(step);
-    }
-    regl.poll();
-    const vpWidth = regl._gl.drawingBufferWidth;
-    const vpHeight = regl._gl.drawingBufferHeight;
-
-    for (let i = 0; i < userConfig.fboNum; i++) {
-        fbos[i].resize(vpWidth, vpHeight);
+    if (global_error) {
+        return;
     }
 
-    // const t1 = performance.now();
+    try {
+        if (userConfig.interval > 0) {
+            // Call step in interval
+            setTimeout(step, userConfig.interval);
+        } else {
+            requestAnimationFrame(step);
+        }
+        regl.poll();
+        const vpWidth = regl._gl.drawingBufferWidth;
+        const vpHeight = regl._gl.drawingBufferHeight;
 
-    const ts = browserSupportNow ? navigationStartTime + window.performance.now() : Date.now();
+        for (let i = 0; i < userConfig.fboNum; i++) {
+            fbos[i].resize(vpWidth, vpHeight);
+        }
 
-    await updateElm(ts);
-    // const t2 = performance.now();
-    // console.log("Time to update Elm: " + (t2 - t1) + "ms");
+        // const t1 = performance.now();
 
-    for (let i = 0; i < userConfig.fboNum; i++) {
-        freePalette[i] = true;
+        const ts = browserSupportNow ? navigationStartTime + window.performance.now() : Date.now();
+
+        await updateElm(ts);
+        // const t2 = performance.now();
+        // console.log("Time to update Elm: " + (t2 - t1) + "ms");
+
+        for (let i = 0; i < userConfig.fboNum; i++) {
+            freePalette[i] = true;
+        }
+
+        // console.log(gview);
+        const pid = drawCmd(gview);
+        if (pid >= 0) {
+            drawPalette({ fbo: fbos[pid] });
+        }
+        // const t3 = performance.now();
+        // console.log("Time to render view: " + (t3 - t2) + "ms");
+        regl._gl.flush();
+    } catch (e) {
+        console.error(e);
+        global_error = 1;
+        document.body.textContent = "Error: " + e.message + "\n\n" +
+            "Please check the console for more details.";
     }
 
-    // console.log(gview);
-    const pid = drawCmd(gview);
-    if (pid >= 0) {
-        drawPalette({ fbo: fbos[pid] });
-    }
-
-    // const t3 = performance.now();
-    // console.log("Time to render view: " + (t3 - t2) + "ms");
-    regl._gl.flush();
 }
 
 async function start(v) {
@@ -1089,6 +1097,8 @@ async function start(v) {
 
     // Set camera initial value
     camera = [userConfig.virtWidth / 2, userConfig.virtHeight / 2, 1.0, 0.0];
+
+    TextManager = new TM(regl);
 
     // Load arial font
     await TextManager.init();
@@ -1134,7 +1144,7 @@ function loadBuiltinGLProgram(prog_name) {
     if (programs[prog_name]) {
         loadedPrograms[prog_name] = programs[prog_name]();
     } else {
-        alert("Program not found: " + prog_name);
+        throw new Error("Program not found: " + prog_name);
     }
 }
 
@@ -1162,28 +1172,14 @@ function config(c) {
 }
 
 async function loadFont(v) {
-    const fontjson = await (await fetch(v.json)).json();
-    const image = new Image();
-    image.src = v.img;
-
-    image.onload = () => {
-        TextManager.loadFont(v._n, regl.texture({
-            data: image,
-            mag: "linear",
-            min: "linear",
-            flipY: true
-        }), fontjson);
-        const response = {
-            font: v._n
-        }
-        ElmApp.ports.recvREGLCmd.send({
-            _c: "loadFont",
-            response
-        });
+    await TextManager.loadFont(v._n, v.img, v.json);
+    const response = {
+        font: v._n
     }
-    image.onerror = () => {
-        alert("Error loading font")
-    }
+    ElmApp.ports.recvREGLCmd.send({
+        _c: "loadFont",
+        response
+    });
 }
 
 function execCmd(v) {
@@ -1199,7 +1195,7 @@ function execCmd(v) {
     } else if (v._c == "start") {
         start(v);
     } else {
-        alert("No such command!");
+        throw new Error("No such command: " + v._c);
     }
 }
 
