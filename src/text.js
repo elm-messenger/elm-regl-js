@@ -2,11 +2,22 @@
 const newline = /\n/;
 const whitespace = /\s/;
 
+function simpleHash(str) {
+    let hash = 5381; // A common starting prime
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(16); // Return absolute value as hex
+}
+
 function FontManager(regl) {
     const _this = this;
     let loadedFonts = {};
     let loadedTexture = {};
     let fontCache = {};
+    let fontCache_old = {};
 
     async function init() {
         const fontjsonObject = require("./consolas/Consolas");
@@ -258,6 +269,25 @@ function FontManager(regl) {
         return buffers;
     }
 
+    function checkOptEq(opts1, opts2) {
+        if (opts1.text !== opts2.text) return false;
+        if (opts1.width !== opts2.width) return false;
+        if (opts1.align !== opts2.align) return false;
+        if (opts1.size !== opts2.size) return false;
+        if (opts1.letterSpacing !== opts2.letterSpacing) return false;
+        if (opts1.lineHeight !== opts2.lineHeight) return false;
+        if (opts1.wordSpacing !== opts2.wordSpacing) return false;
+        if (opts1.tabSize !== opts2.tabSize) return false;
+        if (opts1.wordBreak !== opts2.wordBreak) return false;
+        if (opts1.it !== opts2.it) return false;
+        if (opts1.baseline !== opts2.baseline) return false;
+        if (opts1.fonts.length !== opts2.fonts.length) return false;
+        for (let i = 0; i < opts1.fonts.length; i++) {
+            if (opts1.fonts[i] !== opts2.fonts[i]) return false;
+        }
+        return true;
+    }
+
     function makeText(opts) {
         if (opts.width == null) opts.width = Infinity;
         if (opts.align == null) opts.align = "left";
@@ -268,8 +298,32 @@ function FontManager(regl) {
         if (opts.tabSize == null) opts.tabSize = 4;
         if (opts.wordBreak == null) opts.wordBreak = false;
         if (opts.it == null) opts.it = 0;
+        if (opts.baseline == null) opts.baseline = "top";
+        const hashText = simpleHash(opts.text);
+        if (fontCache.hasOwnProperty(hashText)) {
+            const cached = fontCache[hashText];
+            if (checkOptEq(cached.opts, opts)) {
+                return cached.buffers;
+            }
+        } else if (fontCache_old.hasOwnProperty(hashText)) {
+            const cached = fontCache_old[hashText];
+            if (checkOptEq(cached.opts, opts)) {
+                // Move to new cache
+                fontCache[hashText] = cached;
+                delete fontCache_old[hashText];
+                return cached.buffers;
+            }
+        }
         const lines = layout(opts);
         const res = populateBuffers(lines, opts);
+        if (Object.keys(fontCache).length >= 20) {
+            fontCache_old = fontCache;
+            fontCache = {};
+        }
+        fontCache[hashText] = {
+            buffers: res,
+            opts: opts,
+        }
         return res;
     }
 

@@ -79,6 +79,13 @@ const verts = {
     "circle": readFileSync('src/circle/vert.glsl', 'utf8'),
 }
 
+function stopError(e) {
+    global_error = 1;
+    console.error(e);
+    document.body.textContent = "Error: " + e.message + "\n\n" +
+        "Please check the console for more details.";
+}
+
 const quad = () => [
     (x) => x
     , regl({
@@ -1066,10 +1073,7 @@ async function step() {
         // console.log("Time to render view: " + (t3 - t2) + "ms");
         regl._gl.flush();
     } catch (e) {
-        console.error(e);
-        global_error = 1;
-        document.body.textContent = "Error: " + e.message + "\n\n" +
-            "Please check the console for more details.";
+        stopError(e);
     }
 
 }
@@ -1184,18 +1188,23 @@ async function loadFont(v) {
 
 function execCmd(v) {
     // console.log(v);
-    if (v._c == "loadFont") {
-        loadFont(v);
-    } else if (v._c == "loadTexture") {
-        loadTexture(v._n, v.opts);
-    } else if (v._c == "createGLProgram") {
-        createGLProgram(v._n, v.proto);
-    } else if (v._c == "config") {
-        config(v.config);
-    } else if (v._c == "start") {
-        start(v);
-    } else {
-        throw new Error("No such command: " + v._c);
+    try {
+
+        if (v._c == "loadFont") {
+            loadFont(v);
+        } else if (v._c == "loadTexture") {
+            loadTexture(v._n, v.opts);
+        } else if (v._c == "createGLProgram") {
+            createGLProgram(v._n, v.proto);
+        } else if (v._c == "config") {
+            config(v.config);
+        } else if (v._c == "start") {
+            start(v);
+        } else {
+            throw new Error("No such command: " + v._c);
+        }
+    } catch (e) {
+        stopError(e);
     }
 }
 
