@@ -20,22 +20,6 @@ function FontManager(regl) {
     let fontCache_old = {};
 
     async function init() {
-        const fontjsonObject = require("./consolas/Consolas");
-        const fontimg = require("./consolas/ConsolasImage")
-        const img = new Image();
-        img.src = fontimg;
-        await img.decode();
-        const texture = regl.texture({
-            data: img,
-            mag: "linear",
-            min: "linear",
-            flipY: true
-        })
-        loadedFonts["consolas"] = {
-            texture: "consolas",
-            text: new Text(fontjsonObject)
-        }
-        loadedTexture["consolas"] = texture;
     }
 
     async function loadFont(name, font_texture, font_json) {
