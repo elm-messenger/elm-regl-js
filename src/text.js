@@ -46,7 +46,7 @@ function FontManager(regl) {
         let textName = null;
         for (const f of opts.fonts) {
             if (!loadedFonts.hasOwnProperty(f)) {
-                throw new Error("Font not loaded: " + f);
+                return null;
             }
             if (textName === null) {
                 textName = loadedFonts[f].texture;
@@ -55,7 +55,7 @@ function FontManager(regl) {
             }
         }
         if (!loadedTexture.hasOwnProperty(textName)) {
-            throw new Error("Texture not loaded: " + textName);
+            return null;
         }
         return loadedTexture[textName];
     }

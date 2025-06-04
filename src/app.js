@@ -320,8 +320,12 @@ const textbox = () => [
         if (x["width"] && x["width"] <= 0) {
             x["width"] = Infinity;
         }
+        const tmap = TextManager.getTexFromFont(x);
+        if (tmap == null) {
+            return null;
+        }
         const res = TextManager.makeText(x);
-        x.tMap = TextManager.getTexFromFont(x);
+        x.tMap = tmap;
         x.position = res.position;
         x.uv = res.uv;
         x.elem = res.index;
