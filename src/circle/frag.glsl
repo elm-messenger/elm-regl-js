@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 uniform vec2 center;
 uniform float radius;
 uniform vec2 view;
