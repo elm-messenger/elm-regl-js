@@ -653,34 +653,29 @@ const pixilation = () => [
     })
 ]
 
-function world2viewNoScale(pos) {
-    const dx = pos[0] - camera[0]; // center.x - camera.x
-    const dy = pos[1] - camera[1]; // center.y - camera.y
+function world2viewNoScale(x, y) {
+    const dx = x - camera[0];
+    const dy = y - camera[1];
 
-    let cpos;
-
-    if (camera[2] === 0.0) { // camera.w == 0.0
-        cpos = [dx, dy];
+    if (camera[3] === 0.0) {
+        return [dx, dy];
     } else {
-        const angle = camera[2]; // camera.w
+        const angle = camera[3];
         const cosA = Math.cos(angle);
         const sinA = Math.sin(angle);
-
-        // 2D rotation matrix * (dx, dy)
-        cpos = [
-            (cosA * dx - sinA * dy),
-            (sinA * dx + cosA * dy)
+        return [
+            cosA * dx + sinA * dy,
+            -sinA * dx + cosA * dy
         ];
     }
-
-    return cpos;
 }
 
 const circle = () => [
     x => {
         // Pre-compute cpos
-        let cpos = world2viewNoScale(x["center"]);
-        x["cr"] = [cpos[0], cpos[1], x["radius"]];
+        const arg = x["cr"];
+        let cpos = world2viewNoScale(arg[0], arg[1]);
+        x["cr"] = [cpos[0], cpos[1], arg[2]];
         return x;
     },
     regl({

@@ -12,18 +12,25 @@ void main() {
     vec2 scaledVertex = (texc - 0.5) * posize.zw;
     vec2 rotatedVertex = scaledVertex;
     if(angle != 0.0) {
-        mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-        rotatedVertex = rotation * scaledVertex;
+        float cosA = cos(angle);
+        float sinA = sin(angle);
+
+        rotatedVertex = vec2(cosA * scaledVertex.x + sinA * scaledVertex.y, -sinA * scaledVertex.x + cosA * scaledVertex.y);
     }
 
     vec2 worldPosition = posize.xy + rotatedVertex;
 
-    if (camera.w == 0.0){
+    if(camera.w == 0.0) {
         vec2 pos = (worldPosition - camera.xy) * camera.z / view;
         gl_Position = vec4(pos, 0, 1);
     } else {
-        mat2 rotation = mat2(cos(camera.w), -sin(camera.w), sin(camera.w), cos(camera.w));
-        vec2 pos = (rotation * (worldPosition - camera.xy)) * camera.z / view;
+        vec2 diff = worldPosition - camera.xy;
+        float cosW = cos(camera.w);
+        float sinW = sin(camera.w);
+
+        vec2 rotated = vec2(cosW * diff.x + sinW * diff.y, -sinW * diff.x + cosW * diff.y);
+
+        vec2 pos = rotated * camera.z / view;
         gl_Position = vec4(pos, 0, 1);
     }
 }
