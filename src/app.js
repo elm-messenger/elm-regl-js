@@ -58,6 +58,7 @@ const frags = {
     "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
+    "colormult": readFileSync('src/colormult/frag.glsl', 'utf8'),
     "circle": readFileSync('src/circle/frag.glsl', 'utf8')
 }
 
@@ -76,6 +77,7 @@ const verts = {
     "crt": readFileSync('src/crt/vert.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/vert.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/vert.glsl', 'utf8'),
+    "colormult": readFileSync('src/colormult/vert.glsl', 'utf8'),
     "circle": readFileSync('src/circle/vert.glsl', 'utf8'),
 }
 
@@ -608,6 +610,31 @@ const alphamult = () => [
     })
 ]
 
+const colormult = () => [
+    x => x,
+    regl({
+        frag: frags["colormult"],
+        vert: verts["colormult"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            color: regl.prop('color')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+
 const circle = () => [
     x => x,
     regl({
@@ -654,6 +681,7 @@ const programs = {
     crt,
     fxaa,
     alphamult,
+    colormult,
     // Compositors
     defaultCompositor,
     compFade,
