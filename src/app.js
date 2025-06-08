@@ -59,6 +59,7 @@ const frags = {
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
     "colormult": readFileSync('src/colormult/frag.glsl', 'utf8'),
+    "pixilation": readFileSync('src/pixilation/frag.glsl', 'utf8'),
     "circle": readFileSync('src/circle/frag.glsl', 'utf8')
 }
 
@@ -69,15 +70,8 @@ const verts = {
     "texture-centered": readFileSync('src/texture-centered/vert.glsl', 'utf8'),
     "texture-cropped-centered": readFileSync('src/texture-cropped-centered/vert.glsl', 'utf8'),
     "text": readFileSync('src/text/vert.glsl', 'utf8'),
-    "compositor": readFileSync('src/compositors/vert.glsl', 'utf8'),
-    "compFade": readFileSync('src/compFade/vert.glsl', 'utf8'),
-    "imgFade": readFileSync('src/imgFade/vert.glsl', 'utf8'),
-    "blur": readFileSync('src/blur/vert.glsl', 'utf8'),
-    "gblur": readFileSync('src/gblur/vert.glsl', 'utf8'),
-    "crt": readFileSync('src/crt/vert.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/vert.glsl', 'utf8'),
-    "alphamult": readFileSync('src/alphamult/vert.glsl', 'utf8'),
-    "colormult": readFileSync('src/colormult/vert.glsl', 'utf8'),
+    "effect": readFileSync('src/effect/vert.glsl', 'utf8'),
     "circle": readFileSync('src/circle/vert.glsl', 'utf8'),
 }
 
@@ -358,7 +352,7 @@ const defaultCompositor = () => [
     x => x,
     regl({
         frag: frags["compositor"],
-        vert: verts["compositor"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -383,7 +377,7 @@ const compFade = () => [
     x => x,
     regl({
         frag: frags["compFade"],
-        vert: verts["compFade"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -416,7 +410,7 @@ const imgFade = () => [
     },
     regl({
         frag: frags["imgFade"],
-        vert: verts["imgFade"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -443,7 +437,7 @@ const blurh = () => [
     x => x,
     regl({
         frag: frags["blur1"],
-        vert: verts["blur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -467,7 +461,7 @@ const blurv = () => [
     x => x,
     regl({
         frag: frags["blur2"],
-        vert: verts["blur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -492,7 +486,7 @@ const gblurh = () => [
     x => x,
     regl({
         frag: frags["gblur"],
-        vert: verts["gblur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -518,7 +512,7 @@ const gblurv = () => [
     x => x,
     regl({
         frag: frags["gblur"],
-        vert: verts["gblur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -543,7 +537,7 @@ const crt = () => [
     x => x,
     regl({
         frag: frags["crt"],
-        vert: verts["crt"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -590,7 +584,7 @@ const alphamult = () => [
     x => x,
     regl({
         frag: frags["alphamult"],
-        vert: verts["alphamult"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -614,7 +608,7 @@ const colormult = () => [
     x => x,
     regl({
         frag: frags["colormult"],
-        vert: verts["colormult"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -634,6 +628,29 @@ const colormult = () => [
     })
 ]
 
+const pixilation = () => [
+    x => x,
+    regl({
+        frag: frags["pixilation"],
+        vert: verts["effect"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            pixelSize: regl.prop('ps')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
 
 const circle = () => [
     x => x,
@@ -682,6 +699,7 @@ const programs = {
     fxaa,
     alphamult,
     colormult,
+    pixilation,
     // Compositors
     defaultCompositor,
     compFade,
