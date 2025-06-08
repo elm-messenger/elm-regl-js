@@ -15,7 +15,6 @@ void main() {
     }
 
     vec4 avg = vec4(0.0);
-    float maxa = 0.0;
 
     for (int i = -BLUR_RADIUS; i <= BLUR_RADIUS; i++) {
         vec2 offset = vec2(float(i) * radius / (2. * view.x), 0.0);

@@ -8,13 +8,17 @@ uniform vec4 camera;
 void main() {
     vUv = uv;
     vec2 wpos = position + offset;
-    if (camera.w == 0.0){
-        // No rotation
+    if(camera.w == 0.0) {
         vec2 pos = (wpos - camera.xy) * camera.z / view;
         gl_Position = vec4(pos, 0, 1);
     } else {
-        mat2 rotation = mat2(cos(camera.w), -sin(camera.w), sin(camera.w), cos(camera.w));
-        vec2 pos = (rotation * (wpos - camera.xy)) * camera.z / view;
+        vec2 diff = wpos - camera.xy;
+        float cosW = cos(camera.w);
+        float sinW = sin(camera.w);
+
+        vec2 rotated = vec2(cosW * diff.x + sinW * diff.y, -sinW * diff.x + cosW * diff.y);
+
+        vec2 pos = rotated * camera.z / view;
         gl_Position = vec4(pos, 0, 1);
     }
 }

@@ -43,6 +43,7 @@ let browserSupportNow = (
 let navigationStartTime = browserSupportNow ? window.performance.timeOrigin : 0;
 
 const frags = {
+    "palette": readFileSync('src/palette/frag.glsl', 'utf8'),
     "triangle": readFileSync('src/triangle/frag.glsl', 'utf8'),
     "rect": readFileSync('src/rect/frag.glsl', 'utf8'),
     "texture": readFileSync('src/texture/frag.glsl', 'utf8'),
@@ -58,6 +59,8 @@ const frags = {
     "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
+    "colormult": readFileSync('src/colormult/frag.glsl', 'utf8'),
+    "pixilation": readFileSync('src/pixilation/frag.glsl', 'utf8'),
     "circle": readFileSync('src/circle/frag.glsl', 'utf8')
 }
 
@@ -68,14 +71,8 @@ const verts = {
     "texture-centered": readFileSync('src/texture-centered/vert.glsl', 'utf8'),
     "texture-cropped-centered": readFileSync('src/texture-cropped-centered/vert.glsl', 'utf8'),
     "text": readFileSync('src/text/vert.glsl', 'utf8'),
-    "compositor": readFileSync('src/compositors/vert.glsl', 'utf8'),
-    "compFade": readFileSync('src/compFade/vert.glsl', 'utf8'),
-    "imgFade": readFileSync('src/imgFade/vert.glsl', 'utf8'),
-    "blur": readFileSync('src/blur/vert.glsl', 'utf8'),
-    "gblur": readFileSync('src/gblur/vert.glsl', 'utf8'),
-    "crt": readFileSync('src/crt/vert.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/vert.glsl', 'utf8'),
-    "alphamult": readFileSync('src/alphamult/vert.glsl', 'utf8'),
+    "effect": readFileSync('src/effect/vert.glsl', 'utf8'),
     "circle": readFileSync('src/circle/vert.glsl', 'utf8'),
 }
 
@@ -356,7 +353,7 @@ const defaultCompositor = () => [
     x => x,
     regl({
         frag: frags["compositor"],
-        vert: verts["compositor"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -381,7 +378,7 @@ const compFade = () => [
     x => x,
     regl({
         frag: frags["compFade"],
-        vert: verts["compFade"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -414,7 +411,7 @@ const imgFade = () => [
     },
     regl({
         frag: frags["imgFade"],
-        vert: verts["imgFade"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -441,7 +438,7 @@ const blurh = () => [
     x => x,
     regl({
         frag: frags["blur1"],
-        vert: verts["blur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -465,7 +462,7 @@ const blurv = () => [
     x => x,
     regl({
         frag: frags["blur2"],
-        vert: verts["blur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -490,7 +487,7 @@ const gblurh = () => [
     x => x,
     regl({
         frag: frags["gblur"],
-        vert: verts["gblur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -516,7 +513,7 @@ const gblurv = () => [
     x => x,
     regl({
         frag: frags["gblur"],
-        vert: verts["gblur"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -541,7 +538,7 @@ const crt = () => [
     x => x,
     regl({
         frag: frags["crt"],
-        vert: verts["crt"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -588,7 +585,7 @@ const alphamult = () => [
     x => x,
     regl({
         frag: frags["alphamult"],
-        vert: verts["alphamult"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
@@ -608,8 +605,79 @@ const alphamult = () => [
     })
 ]
 
-const circle = () => [
+const colormult = () => [
     x => x,
+    regl({
+        frag: frags["colormult"],
+        vert: verts["effect"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            color: regl.prop('color')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+const pixilation = () => [
+    x => x,
+    regl({
+        frag: frags["pixilation"],
+        vert: verts["effect"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            pixelSize: regl.prop('ps')
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
+function world2viewNoScale(x, y) {
+    const dx = x - camera[0];
+    const dy = y - camera[1];
+
+    if (camera[3] === 0.0) {
+        return [dx, dy];
+    } else {
+        const angle = camera[3];
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+        return [
+            cosA * dx + sinA * dy,
+            -sinA * dx + cosA * dy
+        ];
+    }
+}
+
+const circle = () => [
+    x => {
+        // Pre-compute cpos
+        const arg = x["cr"];
+        let cpos = world2viewNoScale(arg[0], arg[1]);
+        x["cr"] = [cpos[0], cpos[1], arg[2]];
+        return x;
+    },
     regl({
         frag: frags["circle"],
         vert: verts["circle"],
@@ -622,8 +690,7 @@ const circle = () => [
             ]
         },
         uniforms: {
-            center: regl.prop('center'),
-            radius: regl.prop('radius'),
+            cr: regl.prop('cr'),
             color: regl.prop('color')
         },
         elements: [
@@ -654,6 +721,8 @@ const programs = {
     crt,
     fxaa,
     alphamult,
+    colormult,
+    pixilation,
     // Compositors
     defaultCompositor,
     compFade,
@@ -1115,8 +1184,8 @@ async function start(v) {
     }
 
     drawPalette = regl({
-        frag: readFileSync('src/palette/frag.glsl', 'utf8'),
-        vert: readFileSync('src/palette/vert.glsl', 'utf8'),
+        frag: frags["palette"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
