@@ -43,6 +43,7 @@ let browserSupportNow = (
 let navigationStartTime = browserSupportNow ? window.performance.timeOrigin : 0;
 
 const frags = {
+    "palette": readFileSync('src/palette/frag.glsl', 'utf8'),
     "triangle": readFileSync('src/triangle/frag.glsl', 'utf8'),
     "rect": readFileSync('src/rect/frag.glsl', 'utf8'),
     "texture": readFileSync('src/texture/frag.glsl', 'utf8'),
@@ -1161,8 +1162,8 @@ async function start(v) {
     }
 
     drawPalette = regl({
-        frag: readFileSync('src/palette/frag.glsl', 'utf8'),
-        vert: readFileSync('src/palette/vert.glsl', 'utf8'),
+        frag: frags["palette"],
+        vert: verts["effect"],
         attributes: {
             texc: [
                 1, 1,
