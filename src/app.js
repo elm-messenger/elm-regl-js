@@ -653,8 +653,36 @@ const pixilation = () => [
     })
 ]
 
+function world2viewNoScale(pos) {
+    const dx = pos[0] - camera[0]; // center.x - camera.x
+    const dy = pos[1] - camera[1]; // center.y - camera.y
+
+    let cpos;
+
+    if (camera[2] === 0.0) { // camera.w == 0.0
+        cpos = [dx, dy];
+    } else {
+        const angle = camera[2]; // camera.w
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+
+        // 2D rotation matrix * (dx, dy)
+        cpos = [
+            (cosA * dx - sinA * dy),
+            (sinA * dx + cosA * dy)
+        ];
+    }
+
+    return cpos;
+}
+
 const circle = () => [
-    x => x,
+    x => {
+        // Pre-compute cpos
+        let cpos = world2viewNoScale(x["center"]);
+        x["cr"] = [cpos[0], cpos[1], x["radius"]];
+        return x;
+    },
     regl({
         frag: frags["circle"],
         vert: verts["circle"],
@@ -667,8 +695,7 @@ const circle = () => [
             ]
         },
         uniforms: {
-            center: regl.prop('center'),
-            radius: regl.prop('radius'),
+            cr: regl.prop('cr'),
             color: regl.prop('color')
         },
         elements: [

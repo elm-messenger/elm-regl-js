@@ -1,24 +1,13 @@
 precision highp float;
-uniform vec2 center;
-uniform float radius;
-uniform vec2 view;
-uniform vec4 camera;
 uniform vec4 color;
 varying vec2 v_position;
-void main() {
-    vec2 position = v_position * view / camera.z;
-    vec2 cpos;
-    if (camera.w == 0.0){
-        cpos = (center - camera.xy);
-    } else {
-        mat2 rotation = mat2(cos(camera.w), -sin(camera.w), sin(camera.w), cos(camera.w));
-        cpos = (rotation * (center - camera.xy));
-    }
+uniform vec3 cr;
 
-    float distance = distance(position, cpos);
-    if(distance > radius + 1.) {
+void main() {
+    float distance = distance(v_position, cr.xy);
+    if(distance > cr.z + 1.) {
         discard;
     }
-    float alpha =  1. - smoothstep(radius - 1., radius + 1., distance);
+    float alpha =  1. - smoothstep(cr.z - 1., cr.z + 1., distance);
     gl_FragColor = vec4(color.rgb * alpha, alpha);
 }
