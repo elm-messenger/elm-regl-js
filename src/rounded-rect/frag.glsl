@@ -5,14 +5,15 @@ uniform vec4 cs;
 uniform float radius;
 
 void main() {
-    if(abs(v_position.x - cs.x) > cs.z / 2.)
+    float hw = cs.z / 2.;
+    float hh = cs.w / 2.;
+    if(abs(v_position.x - cs.x) > hw)
         discard;
-    if(abs(v_position.y - cs.y) > cs.w / 2.)
+    if(abs(v_position.y - cs.y) > hh)
         discard;
 
-    vec2 lt = vec2(cs.x - cs.z + radius, cs.y - cs.w + radius);
-    if(v_position.x < lt.x && v_position.y > lt.y) {
-        // Left top
+    vec2 lt = vec2(cs.x - hw + radius, cs.y - hh + radius);
+    if(v_position.x < lt.x && v_position.y < lt.y) {
         float distance = distance(v_position, lt);
         if(distance > radius + 1.) {
             discard;
@@ -21,9 +22,8 @@ void main() {
         gl_FragColor = color * alpha;
         return;
     }
-    vec2 rt = vec2(cs.x + cs.z - radius, cs.y - cs.w + radius);
-    if(v_position.x > rt.x && v_position.y > rt.y) {
-        // Right top
+    vec2 rt = vec2(cs.x + hw - radius, cs.y - hh + radius);
+    if(v_position.x > rt.x && v_position.y < rt.y) {
         float distance = distance(v_position, rt);
         if(distance > radius + 1.) {
             discard;
@@ -32,9 +32,8 @@ void main() {
         gl_FragColor = color * alpha;
         return;
     }
-    vec2 lb = vec2(cs.x - cs.z + radius, cs.y + cs.w - radius);
-    if(v_position.x < lb.x && v_position.y < lb.y) {
-        // Left bottom
+    vec2 lb = vec2(cs.x - hw + radius, cs.y + hh - radius);
+    if(v_position.x < lb.x && v_position.y > lb.y) {
         float distance = distance(v_position, lb);
         if(distance > radius + 1.) {
             discard;
@@ -43,9 +42,8 @@ void main() {
         gl_FragColor = color * alpha;
         return;
     }
-    vec2 rb = vec2(cs.x + cs.z - radius, cs.y + cs.w - radius);
-    if(v_position.x > rb.x && v_position.y < rb.y) {
-        // Right bottom
+    vec2 rb = vec2(cs.x + hw - radius, cs.y + hh - radius);
+    if(v_position.x > rb.x && v_position.y > rb.y) {
         float distance = distance(v_position, rb);
         if(distance > radius + 1.) {
             discard;

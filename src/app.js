@@ -61,7 +61,8 @@ const frags = {
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
     "colormult": readFileSync('src/colormult/frag.glsl', 'utf8'),
     "pixilation": readFileSync('src/pixilation/frag.glsl', 'utf8'),
-    "circle": readFileSync('src/circle/frag.glsl', 'utf8')
+    "circle": readFileSync('src/circle/frag.glsl', 'utf8'),
+    "rounded-rect": readFileSync('src/rounded-rect/frag.glsl', 'utf8')
 }
 
 const verts = {
@@ -73,7 +74,7 @@ const verts = {
     "text": readFileSync('src/text/vert.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/vert.glsl', 'utf8'),
     "effect": readFileSync('src/effect/vert.glsl', 'utf8'),
-    "circle": readFileSync('src/circle/vert.glsl', 'utf8'),
+    "circle": readFileSync('src/circle/vert.glsl', 'utf8'), // To world pos
 }
 
 function stopError(e) {
@@ -653,31 +654,8 @@ const pixilation = () => [
     })
 ]
 
-function world2viewNoScale(x, y) {
-    const dx = x - camera[0];
-    const dy = y - camera[1];
-
-    if (camera[3] === 0.0) {
-        return [dx, dy];
-    } else {
-        const angle = camera[3];
-        const cosA = Math.cos(angle);
-        const sinA = Math.sin(angle);
-        return [
-            cosA * dx + sinA * dy,
-            -sinA * dx + cosA * dy
-        ];
-    }
-}
-
 const circle = () => [
-    x => {
-        // Pre-compute cpos
-        const arg = x["cr"];
-        let cpos = world2viewNoScale(arg[0], arg[1]);
-        x["cr"] = [cpos[0], cpos[1], arg[2]];
-        return x;
-    },
+    x => x,
     regl({
         frag: frags["circle"],
         vert: verts["circle"],
@@ -702,12 +680,40 @@ const circle = () => [
     })
 ]
 
+const roundedRect = () => [
+    x => x,
+    regl({
+        frag: frags["rounded-rect"],
+        vert: verts["circle"],
+        attributes: {
+            position: [
+                -1, -1,
+                1, -1,
+                1, 1,
+                -1, 1,
+            ]
+        },
+        uniforms: {
+            cs: regl.prop('cs'),
+            color: regl.prop('color'),
+            radius: regl.prop('radius'),
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+
+        count: 6
+    })
+]
+
 const programs = {
     triangle,
     textbox,
     quad,
     rect,
     circle,
+    roundedRect,
     poly,
     texture,
     textureCropped,
