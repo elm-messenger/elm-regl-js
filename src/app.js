@@ -58,6 +58,7 @@ const frags = {
     "gblur": readFileSync('src/gblur/frag.glsl', 'utf8'),
     "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
+    "outline": readFileSync('src/outline/frag.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
     "colormult": readFileSync('src/colormult/frag.glsl', 'utf8'),
     "pixilation": readFileSync('src/pixilation/frag.glsl', 'utf8'),
@@ -630,6 +631,31 @@ const colormult = () => [
     })
 ]
 
+const outline = () => [
+    x => x,
+    regl({
+        frag: frags["outline"],
+        vert: verts["effect"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            color: regl.prop('color'),
+            outline: regl.prop('outline'),
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const pixilation = () => [
     x => x,
     regl({
@@ -729,6 +755,7 @@ const programs = {
     alphamult,
     colormult,
     pixilation,
+    outline,
     // Compositors
     defaultCompositor,
     compFade,

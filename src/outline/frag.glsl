@@ -3,8 +3,9 @@ precision mediump float;
 uniform sampler2D texture;
 uniform float outline; // outline width
 uniform vec2 view;
+uniform vec4 color;
+
 varying vec2 uv;
-varying vec4 color;
 
 void main() {
 
@@ -12,7 +13,8 @@ void main() {
    float maxAlpha = alpha;
 
    if (alpha != 0.0) {
-        discard;
+        gl_FragColor = texture2D(texture, uv);
+        return;
    }
 
     for (float i = 1.; i <= 10.; i++) {
