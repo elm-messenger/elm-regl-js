@@ -5,6 +5,7 @@ uniform vec4 cs;
 uniform float radius;
 
 void main() {
+    vec4 nc = vec4(color.rgb * color.a, color.a);
     float hw = cs.z / 2.;
     float hh = cs.w / 2.;
     if(abs(v_position.x - cs.x) > hw)
@@ -19,7 +20,7 @@ void main() {
             discard;
         }
         float alpha = 1. - smoothstep(radius - 1., radius + 1., distance);
-        gl_FragColor = color * alpha;
+        gl_FragColor = nc * alpha;
         return;
     }
     vec2 rt = vec2(cs.x + hw - radius, cs.y - hh + radius);
@@ -29,7 +30,7 @@ void main() {
             discard;
         }
         float alpha = 1. - smoothstep(radius - 1., radius + 1., distance);
-        gl_FragColor = color * alpha;
+        gl_FragColor = nc * alpha;
         return;
     }
     vec2 lb = vec2(cs.x - hw + radius, cs.y + hh - radius);
@@ -39,7 +40,7 @@ void main() {
             discard;
         }
         float alpha = 1. - smoothstep(radius - 1., radius + 1., distance);
-        gl_FragColor = color * alpha;
+        gl_FragColor = nc * alpha;
         return;
     }
     vec2 rb = vec2(cs.x + hw - radius, cs.y + hh - radius);
@@ -49,10 +50,10 @@ void main() {
             discard;
         }
         float alpha = 1. - smoothstep(radius - 1., radius + 1., distance);
-        gl_FragColor = color * alpha;
+        gl_FragColor = nc * alpha;
         return;
     }
 
     // Center rectangle
-    gl_FragColor = color;
+    gl_FragColor = nc;
 }
