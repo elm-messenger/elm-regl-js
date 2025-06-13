@@ -947,7 +947,15 @@ function drawSingleCommand(v) {
         execProg(p, v);
     } else if (v._c == 1) {
         // REGL commands
-        regl[v._n](v);
+        if (v._n == "clear"){
+            const a = v.color[3];
+            v.color[0] *= a;
+            v.color[1] *= a;
+            v.color[2] *= a;
+            regl.clear(v);
+        } else {
+            throw new Error("Unknown REGL command: " + v._n);
+        }
     } else {
         console.log(v);
         throw new Error("drawSingleCommand: Unknown command type: " + v._c);
