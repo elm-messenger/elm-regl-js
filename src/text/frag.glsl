@@ -17,7 +17,7 @@ void main() {
     vec3 tex = texture2D(tMap, vUv).rgb;
     float d = max(min(tex.r, tex.g), min(max(tex.r, tex.g), tex.b)) - 0.5;
     float bodyDist = screenPxRange() * d;
-    float alpha = clamp(bodyDist + thickness, 0.0, 1.0);
+    float alpha = clamp(bodyDist + 0.5 + thickness, 0.0, 1.0);
 
     if(alpha < 0.01)
         discard;

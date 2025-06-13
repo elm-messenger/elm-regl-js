@@ -328,7 +328,7 @@ const textbox = () => [
         x.position = res.position;
         x.uv = res.uv;
         x.elem = res.index;
-        x.thickness = x.thickness ? x.thickness : 0.5;
+        x.thickness = x.thickness != undefined ? x.thickness : 0;
         x.unitRange = TextManager.getFont(x.fonts[0]).text.unitRange;
         return x;
     },
@@ -804,9 +804,9 @@ function createGLProgram(prog_name, proto) {
         throw new Error("Program already exists: " + prog_name);
     }
     // console.log("Creating program: " + prog_name);
-    const uniforms = proto.uniforms ? proto.uniforms : {};
-    const attributes = proto.attributes ? proto.attributes : {};
-    const uniformTextureKeys = proto.uniformsDynTexture ? Object.keys(proto.uniformsDynTexture) : [];
+    const uniforms = proto.uniforms != undefined ? proto.uniforms : {};
+    const attributes = proto.attributes != undefined ? proto.attributes : {};
+    const uniformTextureKeys = proto.uniformsDynTexture != undefined ? Object.keys(proto.uniformsDynTexture) : [];
     const initfunc = (x) => {
         for (let i = 0; i < uniformTextureKeys.length; i++) {
             const key = uniformTextureKeys[i];
