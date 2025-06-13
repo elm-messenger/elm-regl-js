@@ -328,10 +328,7 @@ const textbox = () => [
         x.position = res.position;
         x.uv = res.uv;
         x.elem = res.index;
-        const thickness = x.thickness ? x.thickness : 0.5;
-        const toutline = x.outline ? x.outline : 0;
-        x.ocolor = x.ocolor ? x.ocolor : [0,0,0,1];
-        x.topt = [thickness, toutline];
+        x.thickness = x.thickness ? x.thickness : 0.5;
         x.unitRange = TextManager.getFont(x.fonts[0]).text.unitRange;
         return x;
     },
@@ -346,8 +343,7 @@ const textbox = () => [
             tMap: regl.prop('tMap'),
             offset: regl.prop('offset'),
             color: regl.prop('color'),
-            ocolor: regl.prop('ocolor'),
-            topt: regl.prop('topt'),
+            thickness: regl.prop('thickness'),
             unitRange: regl.prop('unitRange'),
         },
         elements: regl.prop('elem'),
