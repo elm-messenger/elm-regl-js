@@ -13,12 +13,13 @@ float screenPxRange() {
 }
 
 void main() {
+    vec4 nc = vec4(color.rgb * color.a, color.a);
     vec3 tex = texture2D(tMap, vUv).rgb;
     float d = max(min(tex.r, tex.g), min(max(tex.r, tex.g), tex.b)) - 0.5;
-    float screenPxDistance = screenPxRange() * d;
-    float alpha = clamp(screenPxDistance + thickness, 0.0, 1.0);
+    float bodyDist = screenPxRange() * d;
+    float alpha = clamp(bodyDist + 0.5 + thickness, 0.0, 1.0);
+
     if(alpha < 0.01)
         discard;
-    gl_FragColor.rgb = color.rgb * color.a * alpha;
-    gl_FragColor.a = alpha * color.a;
+    gl_FragColor = nc * alpha;
 }

@@ -58,6 +58,7 @@ const frags = {
     "gblur": readFileSync('src/gblur/frag.glsl', 'utf8'),
     "crt": readFileSync('src/crt/frag.glsl', 'utf8'),
     "fxaa": readFileSync('src/fxaa/frag.glsl', 'utf8'),
+    "outline": readFileSync('src/outline/frag.glsl', 'utf8'),
     "alphamult": readFileSync('src/alphamult/frag.glsl', 'utf8'),
     "colormult": readFileSync('src/colormult/frag.glsl', 'utf8'),
     "pixilation": readFileSync('src/pixilation/frag.glsl', 'utf8'),
@@ -327,7 +328,7 @@ const textbox = () => [
         x.position = res.position;
         x.uv = res.uv;
         x.elem = res.index;
-        x.thickness = x.thickness ? x.thickness : 0.5;
+        x.thickness = x.thickness != undefined ? x.thickness : 0;
         x.unitRange = TextManager.getFont(x.fonts[0]).text.unitRange;
         return x;
     },
@@ -630,6 +631,31 @@ const colormult = () => [
     })
 ]
 
+const outline = () => [
+    x => x,
+    regl({
+        frag: frags["outline"],
+        vert: verts["effect"],
+        attributes: {
+            texc: [
+                1, 1,
+                1, 0,
+                0, 0,
+                0, 1,]
+        },
+        uniforms: {
+            texture: regl.prop('texture'),
+            color: regl.prop('color'),
+            outline: regl.prop('outline'),
+        },
+        elements: [
+            0, 1, 2,
+            0, 2, 3
+        ],
+        count: 6
+    })
+]
+
 const pixilation = () => [
     x => x,
     regl({
@@ -729,6 +755,7 @@ const programs = {
     alphamult,
     colormult,
     pixilation,
+    outline,
     // Compositors
     defaultCompositor,
     compFade,
@@ -777,9 +804,9 @@ function createGLProgram(prog_name, proto) {
         throw new Error("Program already exists: " + prog_name);
     }
     // console.log("Creating program: " + prog_name);
-    const uniforms = proto.uniforms ? proto.uniforms : {};
-    const attributes = proto.attributes ? proto.attributes : {};
-    const uniformTextureKeys = proto.uniformsDynTexture ? Object.keys(proto.uniformsDynTexture) : [];
+    const uniforms = proto.uniforms != undefined ? proto.uniforms : {};
+    const attributes = proto.attributes != undefined ? proto.attributes : {};
+    const uniformTextureKeys = proto.uniformsDynTexture != undefined ? Object.keys(proto.uniformsDynTexture) : [];
     const initfunc = (x) => {
         for (let i = 0; i < uniformTextureKeys.length; i++) {
             const key = uniformTextureKeys[i];
@@ -920,7 +947,15 @@ function drawSingleCommand(v) {
         execProg(p, v);
     } else if (v._c == 1) {
         // REGL commands
-        regl[v._n](v);
+        if (v._n == "clear"){
+            const a = v.color[3];
+            v.color[0] *= a;
+            v.color[1] *= a;
+            v.color[2] *= a;
+            regl.clear(v);
+        } else {
+            throw new Error("Unknown REGL command: " + v._n);
+        }
     } else {
         console.log(v);
         throw new Error("drawSingleCommand: Unknown command type: " + v._c);
