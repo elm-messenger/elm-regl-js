@@ -1252,7 +1252,8 @@ async function start(v) {
 }
 
 function loadGLProgram(prog_name, f) {
-    // Initialize program
+    // Initialize program from JS
+    // Not intended to be used by Elm
     loadedPrograms[prog_name] = f(regl);
 }
 
@@ -1266,6 +1267,8 @@ function loadBuiltinGLProgram(prog_name) {
 }
 
 function init(canvas, app, override_conf) {
+    // Initialize regl etc.
+    // Called from JS
     ElmApp = app;
     const defconfig = {
         canvas,
@@ -1301,6 +1304,7 @@ async function loadFont(v) {
 }
 
 function execCmd(v) {
+    // APIs accessible from Elm
     // NOTE. May happen before start
     // console.log(v);
     try {
