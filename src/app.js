@@ -19,6 +19,8 @@ let camera = [0.0, 0.0, 1.0, 0.0];
 
 let resolver = null;
 
+let started = false;
+
 let userConfig = {
     interval: 0,
     virtWidth: 1920,
@@ -80,9 +82,16 @@ const verts = {
 
 function stopError(e) {
     global_error = 1;
+    started = false;
     console.error(e);
     document.body.textContent = "Error: " + e.message + "\n\n" +
         "Please check the console for more details.";
+}
+
+function defaultAlpha(x) {
+    if (x["alpha"] == null) {
+        x["alpha"] = 1.0;
+    }
 }
 
 const quad = () => [
@@ -166,9 +175,7 @@ const poly = () => [
 const texture = () => [
     (x) => {
         const src = x["texture"];
-        if (!x["alpha"]) {
-            x["alpha"] = 1.0;
-        }
+        defaultAlpha(x);
         if (!loadedTextures[src]) {
             return null;
         }
@@ -200,9 +207,7 @@ const texture = () => [
 
 const textureCropped = () => [
     (x) => {
-        if (!x["alpha"]) {
-            x["alpha"] = 1.0;
-        }
+        defaultAlpha(x);
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -230,9 +235,7 @@ const textureCropped = () => [
 
 const centeredTexture = () => [
     (x) => {
-        if (!x["alpha"]) {
-            x["alpha"] = 1.0;
-        }
+        defaultAlpha(x);
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -266,9 +269,7 @@ const centeredTexture = () => [
 
 const centeredCroppedTexture = () => [
     (x) => {
-        if (!x["alpha"]) {
-            x["alpha"] = 1.0;
-        }
+        defaultAlpha(x);
         const src = x["texture"];
         if (!loadedTextures[src]) {
             return null;
@@ -781,20 +782,24 @@ function loadTexture(texture_name, opts) {
     const image = new Image();
     image.src = opts.data;
     image.onload = () => {
-        if (opts["subimg"]) {
-            const subimg = opts["subimg"];
-            createImageBitmap(image, subimg[0], subimg[1], subimg[2], subimg[3], { imageOrientation: "flipY", premultiplyAlpha: 'none' }).then((sp) => {
-                opts.data = sp;
-                loadTextureREGL(texture_name, opts, subimg[2], subimg[3]);
-            })
-        } else {
-            opts.data = image;
-            opts.flipY = true;
-            loadTextureREGL(texture_name, opts, image.width, image.height);
+        try {
+            if (opts["subimg"]) {
+                const subimg = opts["subimg"];
+                createImageBitmap(image, subimg[0], subimg[1], subimg[2], subimg[3], { imageOrientation: "flipY", premultiplyAlpha: 'none' }).then((sp) => {
+                    opts.data = sp;
+                    loadTextureREGL(texture_name, opts, subimg[2], subimg[3]);
+                }).catch(stopError);
+            } else {
+                opts.data = image;
+                opts.flipY = true;
+                loadTextureREGL(texture_name, opts, image.width, image.height);
+            }
+        } catch (e) {
+            stopError(e);
         }
     }
     image.onerror = () => {
-        throw new Error("Error loading texture: " + image.src);
+        stopError(new Error("Error loading texture: " + image.src));
     }
 }
 
@@ -865,7 +870,7 @@ function createGLProgram(prog_name, proto) {
     const program = regl(genP);
     loadedPrograms[prog_name] = [initfunc, program];
     const response = {
-        name: prog_name
+        _n: prog_name
     }
     ElmApp.ports.recvREGLCmd.send({
         _c: "createGLProgram",
@@ -876,7 +881,11 @@ function createGLProgram(prog_name, proto) {
 
 async function setView(view) {
     gview = view;
-    resolver();
+    if (resolver) {
+        const r = resolver;
+        resolver = null;
+        r();
+    }
 }
 
 function updateElm(delta) {
@@ -963,11 +972,12 @@ function drawSingleCommand(v) {
 }
 
 function execProg(p, va) {
-    if (p) {
-        const args = p[0](va);
-        if (args) {
-            p[1](args);
-        }
+    if (!p) {
+        throw new Error("Program not loaded: " + va._p);
+    }
+    const args = p[0](va);
+    if (args) {
+        p[1](args);
     }
 }
 
@@ -979,6 +989,11 @@ function drawComp(v) {
     }
     const r1pid = drawCmd(v.r1);
     const r2pid = drawCmd(v.r2);
+    if (r1pid < 0 || r2pid < 0) {
+        freePID(r1pid);
+        freePID(r2pid);
+        return -1;
+    }
     const npid = getFreePalette();
     palettes[npid]({}, () => {
         regl.clear({ color: [0, 0, 0, 0] });
@@ -995,6 +1010,9 @@ function drawComp(v) {
 function simpleCompose(oldp, newp) {
     if (oldp == -1) {
         return newp;
+    }
+    if (newp == -1) {
+        return oldp;
     }
     if (oldp == newp) {
         return oldp;
@@ -1015,6 +1033,9 @@ function freePID(pid) {
 
 function applyEffect(e, pid) {
     // Return the id of the palette used
+    if (pid < 0) {
+        return -1;
+    }
     const npid = getFreePalette();
     palettes[npid]({}, () => {
         regl.clear({ color: [0, 0, 0, 0] });
@@ -1079,6 +1100,7 @@ function drawGroup(v, prev) {
             if (curPalette >= 0) {
                 loadedTextures[c._n] = fbos[curPalette];
             }
+            continue;
         } else {
             // Other Single Commands
             pid = curPalette >= 0 ? curPalette : getFreePalette();
@@ -1094,7 +1116,7 @@ function drawGroup(v, prev) {
                         i++;
                         continue;
                     }
-                    if (lc._c == 2 || lc._c == 3) {
+                    if (lc._c == 2 || lc._c == 3 || lc._c == 4) {
                         i--;
                         break;
                     } else {
@@ -1147,17 +1169,11 @@ function drawCmd(v) {
 }
 
 async function step() {
-    if (global_error) {
+    if (global_error || !started) {
         return;
     }
 
     try {
-        if (userConfig.interval > 0) {
-            // Call step in interval
-            setTimeout(step, userConfig.interval);
-        } else {
-            requestAnimationFrame(step);
-        }
         regl.poll();
         const vpWidth = regl._gl.drawingBufferWidth;
         const vpHeight = regl._gl.drawingBufferHeight;
@@ -1186,6 +1202,13 @@ async function step() {
         // const t3 = performance.now();
         // console.log("Time to render view: " + (t3 - t2) + "ms");
         regl._gl.flush();
+        if (started) {
+            if (userConfig.interval > 0) {
+                setTimeout(step, userConfig.interval);
+            } else {
+                requestAnimationFrame(step);
+            }
+        }
     } catch (e) {
         stopError(e);
     }
@@ -1194,6 +1217,10 @@ async function step() {
 
 async function start(v) {
     // const t0 = performance.now();
+    if (started) {
+        throw new Error("ElmREGL has already been started");
+    }
+    started = true;
     if ("virtWidth" in v) {
         userConfig.virtWidth = v.virtWidth;
     }
@@ -1209,7 +1236,7 @@ async function start(v) {
     }
 
     // Init
-    for (prog_name of toloadprograms) {
+    for (const prog_name of toloadprograms) {
         loadBuiltinGLProgram(prog_name);
     }
 
@@ -1309,7 +1336,7 @@ function execCmd(v) {
     // console.log(v);
     try {
         if (v._c == "loadFont") {
-            loadFont(v);
+            loadFont(v).catch(stopError);
         } else if (v._c == "loadTexture") {
             loadTexture(v._n, v.opts);
         } else if (v._c == "createGLProgram") {
@@ -1317,7 +1344,7 @@ function execCmd(v) {
         } else if (v._c == "config") {
             config(v.config);
         } else if (v._c == "start") {
-            start(v);
+            start(v).catch(stopError);
         } else {
             throw new Error("No such command: " + v._c);
         }

@@ -18,6 +18,9 @@ importers:
       browserify:
         specifier: ^17.0.1
         version: 17.0.1
+      uglify-js:
+        specifier: ^3.19.3
+        version: 3.19.3
 
 packages:
 
@@ -697,6 +700,11 @@ packages:
 
   typedarray@0.0.6:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
+
+  uglify-js@3.19.3:
+    resolution: {integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==}
+    engines: {node: '>=0.8.0'}
+    hasBin: true
 
   umd@3.0.3:
     resolution: {integrity: sha512-4IcGSufhFshvLNcMCV80UnQVlZ5pMOC8mvNPForqwA4+lzYQuetTESLDQkeLmihq8bRcnpbQa48Wb8Lh16/xow==}
@@ -1645,6 +1653,8 @@ snapshots:
   type@2.7.3: {}
 
   typedarray@0.0.6: {}
+
+  uglify-js@3.19.3: {}
 
   umd@3.0.3: {}
 
