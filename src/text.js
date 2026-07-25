@@ -67,6 +67,9 @@ function FontManager(regl) {
     // Creat a buffer for chars
     // Position not set
     function createGeometry(numChars) {
+        if (numChars * 4 > 65535) {
+            throw new Error("Text is too long to render in one draw call");
+        }
         const buffers = {
             position: new Float32Array(numChars * 4 * 3),
             uv: new Float32Array(numChars * 4 * 2),
@@ -157,12 +160,13 @@ function FontManager(regl) {
                 if (charFont === prevcharFont) {
                     if (line.glyphs.length) {
                         const prevGlyph = line.glyphs[line.glyphs.length - 1][0];
-                        let kern = charFontText.getKernPairOffset(glyph.id, prevGlyph.id, opts.size);
+                        let kern = charFontText.getKernPairOffset(prevGlyph.id, glyph.id, opts.size);
                         line.width += kern;
                         wordWidth += kern;
                     }
                 }
                 line.glyphs.push([glyph, line.width]);
+                prevcharFont = charFont;
                 totCharNum++;
                 // Add letterspacing
 
